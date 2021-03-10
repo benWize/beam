@@ -102,16 +102,16 @@ jobs:
         working-directory: ./sdks/python
         run: |
           ls -l ./dist
-#      - name: Upload source tagged rc as artifact
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: source_rc
-#          path: sdks/python/apache-beam-source-rc
-#      - name: Upload compressed sources as artifacts
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: source_rc_zip
-#          path: sdks/python/dist
+      - name: Upload source tagged rc as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: source_rc
+          path: sdks/python/apache-beam-source-rc
+      - name: Upload compressed sources as artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: source_rc_zip
+          path: sdks/python/dist
       - name: Clear dist rc
         if: steps.is_rc.outputs.OUTPUT == 1
         working-directory: ./sdks/python
