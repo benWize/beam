@@ -103,11 +103,13 @@ jobs:
         run: |
           ls -l ./dist
       - name: Upload source tagged rc as artifact
+        if: steps.is_rc.outputs.OUTPUT == 1
         uses: actions/upload-artifact@v2
         with:
           name: source_rc
           path: sdks/python/apache-beam-source-rc
-      - name: Upload compressed sources as artifacts
+      - name: Upload compressed sources tagged rc as artifacts
+        if: steps.is_rc.outputs.OUTPUT == 1
         uses: actions/upload-artifact@v2
         with:
           name: source_rc_zip
