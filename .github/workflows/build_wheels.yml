@@ -211,7 +211,7 @@ jobs:
     - name: Show output last job
       run: echo "Output last job ${{ needs.build_source.outputs.is_rc }}"
     - name: Download python source distribution rc tagged from artifacts
-      if: ${{ needs.build_source.outputs.is_rc }}
+      if: ${{ needs.build_source.outputs.is_rc == 1 }}
       uses: actions/download-artifact@v2
       with:
         name: source_rc
@@ -245,6 +245,7 @@ jobs:
         name: wheelhouse-${{ matrix.os_python.os }}
         path: apache-beam-source/wheelhouse/
     - name: Build wheel rc
+      if: ${{ needs.build_source.outputs.is_rc == 1 }}
       working-directory: apache-beam-source-rc
       env:
         CIBW_BUILD: ${{ matrix.os_python.python }}
@@ -252,6 +253,7 @@ jobs:
       run: cibuildwheel --print-build-identifiers && cibuildwheel --output-dir wheelhouse-rc
       shell: bash
     - name: Add checksums rc
+      if: ${{ needs.build_source.outputs.is_rc == 1 }}
       working-directory: apache-beam-source/wheelhouse-rc/
       run: |
         for file in *.whl; do
@@ -259,6 +261,7 @@ jobs:
         done
       shell: bash
     - name: Upload wheels as artifacts tagged as RC
+      if: ${{ needs.build_source.outputs.is_rc == 1 }}
       uses: actions/upload-artifact@v2
       with:
         name: wheelhouse-rc-${{ matrix.os_python.os }}
