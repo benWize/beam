@@ -112,7 +112,7 @@ jobs:
         if: steps.is_rc.outputs.is_rc == 1
         uses: actions/upload-artifact@v2
         with:
-          name: source_rc_zip
+          name: source_zip_rc
           path: sdks/python/dist
       - name: Clear dist rc
         if: steps.is_rc.outputs.is_rc == 1
