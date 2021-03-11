@@ -250,11 +250,11 @@ jobs:
       env:
         CIBW_BUILD: ${{ matrix.os_python.python }}
         CIBW_BEFORE_BUILD: pip install cython
-      run: cibuildwheel --print-build-identifiers && cibuildwheel --output-dir wheelhouse-rc
+      run: cibuildwheel --print-build-identifiers && cibuildwheel --output-dir wheelhouse
       shell: bash
     - name: Add checksums rc
       if: ${{ needs.build_source.outputs.is_rc == 1 }}
-      working-directory: apache-beam-source/wheelhouse-rc/
+      working-directory: apache-beam-source-rc/wheelhouse/
       run: |
         for file in *.whl; do
           sha512sum $file > ${file}.sha512
@@ -265,7 +265,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: wheelhouse-rc-${{ matrix.os_python.os }}
-        path: apache-beam-source/wheelhouse-rc/
+        path: apache-beam-source-rc/wheelhouse/
 
   upload_wheels_to_gcs:
     name: Upload wheels to GCS bucket
