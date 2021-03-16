@@ -346,7 +346,6 @@ After following one of the previous processes, you should manually update `CHANG
         then sed -i -e "s/${DEV}/${RELEASE}/g" sdks/python/apache_beam/version.py;
         else sed -i -e "s/${DEV}/${RELEASE}-rc${RC_NUM}/g" sdks/python/apache_beam/version.py;
       fi
-      sed -i -e "s/${DEV}/${RELEASE}/g" sdks/go/pkg/beam/core/core.go
       sed -i -e "s/'beam-master-.*'/'beam-${RELEASE}'/g" runners/google-cloud-dataflow-java/build.gradle
 
 
