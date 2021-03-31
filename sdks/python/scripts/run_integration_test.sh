@@ -163,6 +163,11 @@ case $key in
         shift # past argument
         shift # past value
         ;;
+    --pytest)
+      PYTEST="$2"
+      shift # past argument
+      shift # past value
+      ;;
     *)    # unknown option
         echo "Unknown option: $1"
         exit 1
@@ -270,11 +275,21 @@ fi
 # Run tests and validate that jobs finish successfully.
 
 echo ">>> RUNNING integration tests with pipeline options: $PIPELINE_OPTS"
-echo ">>>   test options: $TEST_OPTS"
-# TODO(BEAM-3713): Pass $SUITE once migrated to pytest. xunitmp doesn't support
-#   suite names.
-python setup.py nosetests \
-  --test-pipeline-options="$PIPELINE_OPTS" \
-  --with-xunitmp --xunitmp-file=$XUNIT_FILE \
-  --ignore-files '.*py3\d?\.py$' \
-  $TEST_OPTS
+if [[ "$PYTEST" = true ]]; then
+    echo ">>>   pytest options: $TEST_OPTS"
+    suite_name="it-$SUITE"
+   pytest -o junit_suite_name=$suite_name \
+      --junitxml=pytest_${suite_name}.xml \
+      $TEST_OPTS \
+      --test-pipeline-options="$PIPELINE_OPTS"
+
+else
+    echo ">>>   test options: $TEST_OPTS"
+    # TODO(BEAM-3713): Pass $SUITE once migrated to pytest. xunitmp doesn't
+    #   support suite names.
+    python setup.py nosetests \
+      --test-pipeline-options="$PIPELINE_OPTS" \
+      --with-xunitmp --xunitmp-file=$XUNIT_FILE \
+      --ignore-files '.*py3.py$' \
+      $TEST_OPTS
+fi
