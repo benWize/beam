@@ -23,7 +23,7 @@ import unittest
 from builtins import object
 
 import hamcrest as hc
-from nose.plugins.attrib import attr
+import pytest
 
 import apache_beam as beam
 from apache_beam import metrics
@@ -153,7 +153,7 @@ class MetricsTest(unittest.TestCase):
         "urn=my_urn, labels={'key': 'value'})")
     self.assertEqual(str(mn), expected_str)
 
-  @attr('ValidatesRunner')
+  @pytest.mark.it_validatesrunner
   def test_user_counter_using_pardo(self):
     class SomeDoFn(beam.DoFn):
       """A custom dummy DoFn using yield."""
