@@ -19,6 +19,7 @@ package org.apache.beam.runners.dataflow;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.beam.runners.core.construction.resources.PipelineResources.detectClassPathResourcesToStage;
+import static org.apache.beam.sdk.options.ExperimentalOptions.hasExperiment;
 import static org.apache.beam.sdk.util.CoderUtils.encodeToByteArray;
 import static org.apache.beam.sdk.util.SerializableUtils.serializeToByteArray;
 import static org.apache.beam.sdk.util.StringUtils.byteArrayToJsonString;
@@ -39,6 +40,7 @@ import com.google.api.services.dataflow.model.Job;
 import com.google.api.services.dataflow.model.ListJobsResponse;
 import com.google.api.services.dataflow.model.SdkHarnessContainerImage;
 import com.google.api.services.dataflow.model.WorkerPool;
+import com.google.auto.value.AutoValue;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -177,7 +179,6 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Strings;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Utf8;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
@@ -452,6 +453,27 @@ public class DataflowRunner extends PipelineRunner<DataflowPipelineJob> {
     this.pcollectionsRequiringIndexedFormat = new HashSet<>();
     this.pcollectionsRequiringAutoSharding = new HashSet<>();
     this.ptransformViewsWithNonDeterministicKeyCoders = new HashSet<>();
+  }
+
+  /** For portable jobs, Dataflow still requires an override of the PubsubIO transforms. */
+  private List<PTransformOverride> getPortableOverrides() {
+    ImmutableList.Builder<PTransformOverride> overridesBuilder = ImmutableList.builder();
+
+    if (!hasExperiment(options, "enable_custom_pubsub_source")) {
+      overridesBuilder.add(
+          PTransformOverride.of(
+              PTransformMatchers.classEqualTo(PubsubUnboundedSource.class),
+              new DataflowReadFromPubsubSourceForRunnerV2OverrideFactory()));
+    }
+
+    if (!hasExperiment(options, "enable_custom_pubsub_sink")) {
+      overridesBuilder.add(
+          PTransformOverride.of(
+              PTransformMatchers.classEqualTo(PubsubUnboundedSink.class),
+              new DataflowWriteToPubsubRunnerV2OverrideFactory()));
+    }
+
+    return overridesBuilder.build();
   }
 
   private List<PTransformOverride> getOverrides(boolean streaming) {
@@ -967,6 +989,9 @@ public class DataflowRunner extends PipelineRunner<DataflowPipelineJob> {
             .addAllCapabilities(Environments.getJavaCapabilities())
             .build());
 
+    if (useUnifiedWorker(options)) {
+      pipeline.replaceAll(getPortableOverrides());
+    }
     RunnerApi.Pipeline portablePipelineProto =
         PipelineTranslation.toProto(pipeline, portableComponents, false);
     LOG.debug("Portable pipeline proto:\n{}", TextFormat.printToString(portablePipelineProto));
@@ -1111,8 +1136,7 @@ public class DataflowRunner extends PipelineRunner<DataflowPipelineJob> {
       workerPool.setWorkerHarnessContainerImage(workerHarnessContainerImage);
     }
 
-    configureSdkHarnessContainerImages(
-        options, portablePipelineProto, newJob, workerHarnessContainerImage);
+    configureSdkHarnessContainerImages(options, portablePipelineProto, newJob);
 
     newJob.getEnvironment().setVersion(getEnvironmentVersion(options));
 
@@ -1251,37 +1275,60 @@ public class DataflowRunner extends PipelineRunner<DataflowPipelineJob> {
     return dataflowPipelineJob;
   }
 
+  private static String getContainerImageFromEnvironmentId(
+      String environmentId, RunnerApi.Pipeline pipelineProto) {
+    RunnerApi.Environment environment =
+        pipelineProto.getComponents().getEnvironmentsMap().get(environmentId);
+    if (!BeamUrns.getUrn(RunnerApi.StandardEnvironments.Environments.DOCKER)
+        .equals(environment.getUrn())) {
+      throw new RuntimeException(
+          "Dataflow can only execute pipeline steps in Docker environments: "
+              + environment.getUrn());
+    }
+    RunnerApi.DockerPayload dockerPayload;
+    try {
+      dockerPayload = RunnerApi.DockerPayload.parseFrom(environment.getPayload());
+    } catch (InvalidProtocolBufferException e) {
+      throw new RuntimeException("Error parsing docker payload.", e);
+    }
+    return dockerPayload.getContainerImage();
+  }
+
+  @AutoValue
+  abstract static class EnvironmentInfo {
+    static EnvironmentInfo create(String environmentId, String containerUrl) {
+      return new AutoValue_DataflowRunner_EnvironmentInfo(environmentId, containerUrl);
+    }
+
+    abstract String environmentId();
+
+    abstract String containerUrl();
+  }
+
+  private static List<EnvironmentInfo> getAllEnvironmentInfo(RunnerApi.Pipeline pipelineProto) {
+    return pipelineProto.getComponents().getTransformsMap().values().stream()
+        .map(transform -> transform.getEnvironmentId())
+        .filter(environmentId -> !environmentId.isEmpty())
+        .distinct()
+        .map(
+            environmentId ->
+                EnvironmentInfo.create(
+                    environmentId,
+                    getContainerImageFromEnvironmentId(environmentId, pipelineProto)))
+        .collect(Collectors.toList());
+  }
+
   static void configureSdkHarnessContainerImages(
-      DataflowPipelineOptions options,
-      RunnerApi.Pipeline pipelineProto,
-      Job newJob,
-      String workerHarnessContainerImage) {
+      DataflowPipelineOptions options, RunnerApi.Pipeline pipelineProto, Job newJob) {
     if (useUnifiedWorker(options)) {
-      ImmutableSet.Builder<String> sdkContainerUrlSetBuilder = ImmutableSet.builder();
-      sdkContainerUrlSetBuilder.add(workerHarnessContainerImage);
-      for (Map.Entry<String, RunnerApi.Environment> entry :
-          pipelineProto.getComponents().getEnvironmentsMap().entrySet()) {
-        if (!BeamUrns.getUrn(RunnerApi.StandardEnvironments.Environments.DOCKER)
-            .equals(entry.getValue().getUrn())) {
-          throw new RuntimeException(
-              "Dataflow can only execute pipeline steps in Docker environments: "
-                  + entry.getValue().getUrn());
-        }
-        RunnerApi.DockerPayload dockerPayload;
-        try {
-          dockerPayload = RunnerApi.DockerPayload.parseFrom(entry.getValue().getPayload());
-        } catch (InvalidProtocolBufferException e) {
-          throw new RuntimeException("Error parsing docker payload.", e);
-        }
-        sdkContainerUrlSetBuilder.add(dockerPayload.getContainerImage());
-      }
       List<SdkHarnessContainerImage> sdkContainerList =
-          sdkContainerUrlSetBuilder.build().stream()
+          getAllEnvironmentInfo(pipelineProto).stream()
               .map(
-                  (String url) -> {
+                  environmentInfo -> {
                     SdkHarnessContainerImage image = new SdkHarnessContainerImage();
-                    image.setContainerImage(url);
-                    if (url.toLowerCase().contains("python")) {
+                    image.setEnvironmentId(environmentInfo.environmentId());
+                    image.setContainerImage(environmentInfo.containerUrl());
+                    if (environmentInfo.containerUrl().toLowerCase().contains("python")) {
                       image.setUseSingleCorePerContainer(true);
                     }
                     return image;
