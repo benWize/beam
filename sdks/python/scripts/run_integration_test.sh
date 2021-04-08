@@ -78,6 +78,7 @@ STREAMING=false
 WORKER_JAR=""
 KMS_KEY_NAME="projects/apache-beam-testing/locations/global/keyRings/beam-it/cryptoKeys/test"
 SUITE=""
+COLLECT_MARKERS=
 
 # Default test (nose) options.
 # Run WordCountIT.test_wordcount_it by default if no test options are
@@ -165,6 +166,11 @@ case $key in
         ;;
     --pytest)
       PYTEST="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --collect)
+      COLLECT_MARKERS="-m=$2"
       shift # past argument
       shift # past value
       ;;
@@ -278,10 +284,14 @@ echo ">>> RUNNING integration tests with pipeline options: $PIPELINE_OPTS"
 if [[ "$PYTEST" = true ]]; then
     echo ">>>   pytest options: $TEST_OPTS"
     suite_name="it-$SUITE"
-   pytest -o junit_suite_name=$suite_name \
-      --junitxml=pytest_${suite_name}.xml \
-      $TEST_OPTS \
-      --test-pipeline-options="$PIPELINE_OPTS"
+    ARGS="-o junit_suite_name=$suite_name --junitxml=pytest_${suite_name}.xml $TEST_OPTS"
+#   Handle markers as an independient argument from $TEST_OPTS to prevent errors in space separeted flags
+    if [ -z "$COLLECT_MARKERS" ]; then
+        pytest $ARGS --test-pipeline-options="$PIPELINE_OPTS"
+    else
+        pytest $ARGS --test-pipeline-options="$PIPELINE_OPTS" "$COLLECT_MARKERS"
+    fi
+
 
 else
     echo ">>>   test options: $TEST_OPTS"

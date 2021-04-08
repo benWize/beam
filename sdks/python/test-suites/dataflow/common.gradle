@@ -109,14 +109,13 @@ task postCommitIT {
   def dataflowWorkerJar = project(":runners:google-cloud-dataflow-java:worker").shadowJar.archivePath
 
   doLast {
-    def testOpts = basicTestOpts + ["-m=it_postcommit"]
-
     def argMap = [
-        "test_opts": testOpts,
+        "test_opts": basicTestOpts,
         "sdk_location": files(configurations.distTarBall.files).singleFile,
         "worker_jar": dataflowWorkerJar,
         "suite": "postCommitIT-df${pythonVersionSuffix}",
         "pytest": true, // TODO(BEAM-3713): Remove this once nose is removed.
+        "collect": "it_postcommit"
     ]
 
     def cmdArgs = mapToArgString(argMap)
@@ -133,13 +132,13 @@ task validatesRunnerBatchTests {
   dependsOn ":runners:google-cloud-dataflow-java:worker:shadowJar"
 
   def dataflowWorkerJar = project(":runners:google-cloud-dataflow-java:worker").shadowJar.archivePath
-  def testOpts = basicTestOpts + [ "-m \"it_validatesrunner\"" ] //TODO: Add not no_sickbay_batch
   def argMap = [
-          "test_opts"   : testOpts,
+          "test_opts"   : basicTestOpts,
           "worker_jar"  : dataflowWorkerJar,
           "sdk_location": files(configurations.distTarBall.files).singleFile,
           "suite"       : "validatesRunnerBatchTests-df${pythonVersionSuffix}",
           "pytest": true, // TODO(BEAM-3713): Remove this once nose is removed.
+          "collect": "it_validatesrunner and not no_sickbay_batch"
           ]
 
   if (project.hasProperty('useRunnerV2')) {
@@ -165,13 +164,13 @@ task validatesRunnerStreamingTests {
   def dataflowWorkerJar = project(":runners:google-cloud-dataflow-java:worker").shadowJar.archivePath
 
   // TODO(BEAM-3544,BEAM-5025): Disable tests with 'sickbay-streaming' tag.
-  def testOpts = basicTestOpts + ["-m \"it_validatesrunner\"" ] //TODO: Add not no_sickbay_streaming
-  def argMap = ["test_opts": testOpts,
+  def argMap = ["test_opts": basicTestOpts,
                 "streaming": "true",
                 "sdk_location": files(configurations.distTarBall.files).singleFile,
                 "worker_jar": dataflowWorkerJar,
                 "suite": "validatesRunnerStreamingTests-df${pythonVersionSuffix}",
                 "pytest": true, // TODO(BEAM-3713): Remove this once nose is removed
+                "collect": "it_validatesrunner and not no_sickbay_streaming"
                 ]
   if (project.hasProperty('useRunnerV2')) {
     argMap.put("runner_v2", "true")
