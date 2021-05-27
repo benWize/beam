@@ -155,6 +155,9 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - uses: actions/setup-java@v1
+        with:
+        java-version: 8
       - name: Authenticate on GCP
         uses: google-github-actions/setup-gcloud@master
         with:
