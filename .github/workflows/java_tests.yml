@@ -155,9 +155,6 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: actions/setup-java@v1
-        with:
-          java-version: 8
       - name: Authenticate on GCP
         uses: google-github-actions/setup-gcloud@master
         with:
@@ -168,6 +165,7 @@ jobs:
       - name: Run WordCount
         uses: ./.github/actions/gradle-command-action
         with:
+          java-version: 9
           arguments: -p examples/ integrationTest --tests org.apache.beam.examples.WordCountIT
             -DintegrationTestPipelineOptions=["--runner=DataflowRunner","--project=${{ secrets.GCP_PROJECT_ID }}","--tempRoot=gs://${{ secrets.GCP_TESTING_BUCKET }}/tmp/","--serviceAccount=${{ secrets.GCP_SA_EMAIL }}"]
             -DintegrationTestRunner=dataflow
