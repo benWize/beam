@@ -165,7 +165,7 @@ jobs:
       - name: Set Java Version
         uses: actions/setup-java@v1
         with:
-          java-version: 9
+          java-version: 8
       - name: Run WordCount
         uses: ./.github/actions/gradle-command-action
         with:
