@@ -165,7 +165,7 @@ jobs:
       - name: Run WordCount
         uses: ./.github/actions/gradle-command-action
         with:
-          java-version: 9
+          java-version: 8
           arguments: -p examples/ integrationTest --tests org.apache.beam.examples.WordCountIT
             -DintegrationTestPipelineOptions=["--runner=DataflowRunner","--project=${{ secrets.GCP_PROJECT_ID }}","--tempRoot=gs://${{ secrets.GCP_TESTING_BUCKET }}/tmp/","--serviceAccount=${{ secrets.GCP_SA_EMAIL }}"]
             -DintegrationTestRunner=dataflow
