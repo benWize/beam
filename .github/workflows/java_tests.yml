@@ -163,8 +163,9 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           export_default_credentials: true
       - name: Set Java Version
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt
           java-version: 8
       - name: Run WordCount
         uses: ./.github/actions/gradle-command-action
