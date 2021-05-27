@@ -166,7 +166,7 @@ jobs:
         uses: ./.github/actions/gradle-command-action
         with:
           arguments: -p examples/ integrationTest --tests org.apache.beam.examples.WordCountIT
-            -DintegrationTestPipelineOptions=["--runner=DataflowRunner","--project=${{ secrets.GCP_PROJECT_ID }}","--tempRoot=gs://${{ secrets.GCP_TESTING_BUCKET }}/tmp/"]
+            -DintegrationTestPipelineOptions=["--runner=DataflowRunner","--project=${{ secrets.GCP_PROJECT_ID }}","--tempRoot=gs://${{ secrets.GCP_TESTING_BUCKET }}/tmp/", "--serviceAccount=${{ secrets.GCP_SA_EMAIL }}"]
             -DintegrationTestRunner=dataflow
       - name: Upload test logs
         uses: actions/upload-artifact@v2
