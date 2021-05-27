@@ -34,8 +34,8 @@ on:
     branches: ['master', 'release-*']
     tags: 'v*'
     paths: ['sdks/java/**', 'model/**', 'runners/**', 'examples/java/**',
-            'examples/kotlin/**', 'release/**', 'buildSrc/**']
-
+            'examples/kotlin/**', 'release/**', 'buildSrc/**', '.github/**']
+# TODO(BEAM-12104) Remove .github/** Just for testing
 
 jobs:
 
