@@ -731,7 +731,7 @@ class CallableWrapperDoFn(DoFn):
       # For cases such as set / list where fn is callable but not a function
       self.process = lambda element: fn(element)
 
-    super(CallableWrapperDoFn, self).__init__()
+    super().__init__()
 
   def display_data(self):
     # If the callable has a name, then it's likely a function, and
@@ -1009,7 +1009,7 @@ class CallableWrapperCombineFn(CombineFn):
     if not callable(fn):
       raise TypeError('Expected a callable object instead of: %r' % fn)
 
-    super(CallableWrapperCombineFn, self).__init__()
+    super().__init__()
     self._fn = fn
     self._buffer_size = buffer_size
 
@@ -1210,7 +1210,7 @@ class ParDo(PTransformWithSideInputs):
   exact positions where they appear in the argument lists.
   """
   def __init__(self, fn, *args, **kwargs):
-    super(ParDo, self).__init__(fn, *args, **kwargs)
+    super().__init__(fn, *args, **kwargs)
     # TODO(robertwb): Change all uses of the dofn attribute to use fn instead.
     self.dofn = self.fn
     self.output_tags = set()  # type: typing.Set[str]
@@ -1420,7 +1420,7 @@ class ParDo(PTransformWithSideInputs):
 
 class _MultiParDo(PTransform):
   def __init__(self, do_transform, tags, main_tag):
-    super(_MultiParDo, self).__init__(do_transform.label)
+    super().__init__(do_transform.label)
     self._do_transform = do_transform
     self._tags = tags
     self._main_tag = main_tag
@@ -1848,7 +1848,7 @@ class CombineGlobally(PTransform):
           'CombineGlobally can be used only with combineFn objects. '
           'Received %r instead.' % (fn))
 
-    super(CombineGlobally, self).__init__()
+    super().__init__()
     self.fn = fn
     self.args = args
     self.kwargs = kwargs
@@ -2136,7 +2136,7 @@ class CombineValuesDoFn(DoFn):
       combinefn,  # type: CombineFn
       runtime_type_check,  # type: bool
   ):
-    super(CombineValuesDoFn, self).__init__()
+    super().__init__()
     self.combinefn = combinefn
     self.runtime_type_check = runtime_type_check
 
@@ -2320,10 +2320,10 @@ class GroupByKey(PTransform):
       if pcoll.pipeline.allow_unsafe_triggers:
         # TODO(BEAM-9487) Change comment for Beam 2.33
         _LOGGER.warning(
-            'PCollection passed to GroupByKey (label: %s) is unbounded, has a '
-            'global window, and uses a default trigger. This will no longer '
-            'be allowed starting with Beam 2.33 unless '
-            '--allow_unsafe_triggers is set.',
+            '%s: PCollection passed to GroupByKey is unbounded, has a global '
+            'window, and uses a default trigger. This is being allowed '
+            'because --allow_unsafe_triggers is set, but it may prevent '
+            'data from making it through the pipeline.',
             self.label)
       else:
         raise ValueError(
@@ -2332,22 +2332,19 @@ class GroupByKey(PTransform):
 
     unsafe_reason = trigger.may_lose_data(windowing)
     if unsafe_reason != DataLossReason.NO_POTENTIAL_LOSS:
+      reason_msg = str(unsafe_reason).replace('DataLossReason.', '')
       if pcoll.pipeline.allow_unsafe_triggers:
-        # TODO(BEAM-9487): Switch back to this log for Beam 2.33.
-        # _LOGGER.warning(
-        #   'Skipping trigger safety check. '
-        #   'This could lead to incomplete or missing groups.')
         _LOGGER.warning(
-            '%s: Unsafe trigger type (%s) detected. Starting with '
-            'Beam 2.33, this will raise an error by default. '
-            'Either change the pipeline to use a safe trigger or '
-            'set the --allow_unsafe_triggers flag.',
+            '%s: Unsafe trigger `%s` detected (reason: %s). This is '
+            'being allowed because --allow_unsafe_triggers is set. This could '
+            'lead to missing or incomplete groups.',
             self.label,
-            unsafe_reason)
+            trigger,
+            reason_msg)
       else:
-        msg = 'Unsafe trigger: `{}` may lose data. '.format(trigger)
-        msg += 'Reason: {}. '.format(
-            str(unsafe_reason).replace('DataLossReason.', ''))
+        msg = '{}: Unsafe trigger: `{}` may lose data. '.format(
+            self.label, trigger)
+        msg += 'Reason: {}. '.format(reason_msg)
         msg += 'This can be overriden with the --allow_unsafe_triggers flag.'
         raise ValueError(msg)
 
@@ -2798,7 +2795,7 @@ class WindowInto(ParDo):
         accumulation_mode,
         timestamp_combiner,
         allowed_lateness)
-    super(WindowInto, self).__init__(self.WindowIntoFn(self.windowing))
+    super().__init__(self.WindowIntoFn(self.windowing))
 
   def get_windowing(self, unused_inputs):
     # type: (typing.Any) -> Windowing
@@ -2814,7 +2811,7 @@ class WindowInto(ParDo):
       output_type = input_type
       self.with_input_types(input_type)
       self.with_output_types(output_type)
-    return super(WindowInto, self).expand(pcoll)
+    return super().expand(pcoll)
 
   # typing: PTransform base class does not accept extra_kwargs
   def to_runner_api_parameter(self, context, **extra_kwargs):  # type: ignore[override]
@@ -2862,7 +2859,7 @@ class Flatten(PTransform):
       provide pipeline information and should be considered mandatory.
   """
   def __init__(self, **kwargs):
-    super(Flatten, self).__init__()
+    super().__init__()
     self.pipeline = kwargs.pop(
         'pipeline', None)  # type: typing.Optional[Pipeline]
     if kwargs:
@@ -2908,7 +2905,7 @@ class Create(PTransform):
     Args:
       values: An object of values for the PCollection
     """
-    super(Create, self).__init__()
+    super().__init__()
     if isinstance(values, (str, bytes)):
       raise TypeError(
           'PTransform Create: Refusing to treat string as '

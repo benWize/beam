@@ -39,7 +39,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/apache/beam/sdks/go/pkg/beam/testing/ptest"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/testing/ptest"
 )
 
 // Filters for temporarily skipping integration tests. All filters are regex
@@ -60,6 +60,9 @@ var sickbay = []string{}
 var directFilters = []string{
 	// The direct runner does not yet support cross-language.
 	"TestXLang.*",
+	"TestKafkaIO.*",
+	// Triggers are not yet supported
+	"TestTrigger.*",
 	// The direct runner does not support the TestStream primitive
 	"TestTestStream.*",
 }
@@ -67,13 +70,21 @@ var directFilters = []string{
 var portableFilters = []string{
 	// The portable runner does not support the TestStream primitive
 	"TestTestStream.*",
+	// The trigger tests uses TestStream
+	"TestTrigger.*",
+	// TODO(BEAM-12797): Python portable runner times out on Kafka reads.
+	"TestKafkaIO.*",
 }
 
 var flinkFilters = []string{
 	// TODO(BEAM-11500): Flink tests timing out on reads.
 	"TestXLang_Combine.*",
+	// TODO(BEAM-12815): Test fails: "Insufficient number of network buffers".
+	"TestXLang_Multi",
 	// TODO(BEAM-12753): Flink test stream fails for non-string/byte slice inputs
 	"TestTestStream.*Sequence.*",
+	// Triggers are not yet supported
+	"TestTrigger.*",
 }
 
 var samzaFilters = []string{
@@ -82,6 +93,10 @@ var samzaFilters = []string{
 	"TestReshuffleKV",
 	// The Samza runner does not support the TestStream primitive
 	"TestTestStream.*",
+	// The trigger tests uses TestStream
+	"TestTrigger.*",
+	// TODO(BEAM-13006): Samza doesn't yet support post job metrics, used by WordCount
+	"TestWordCount.*",
 }
 
 var sparkFilters = []string{
@@ -91,6 +106,8 @@ var sparkFilters = []string{
 	"TestParDoKVSideInput",
 	// The Spark runner does not support the TestStream primitive
 	"TestTestStream.*",
+	// The trigger tests uses TestStream
+	"TestTrigger.*",
 }
 
 var dataflowFilters = []string{
@@ -98,6 +115,10 @@ var dataflowFilters = []string{
 	"TestFlattenDup",
 	// The Dataflow runner does not support the TestStream primitive
 	"TestTestStream.*",
+	// The trigger tests uses TestStream
+	"TestTrigger.*",
+	// There is no infrastructure for running KafkaIO tests with Dataflow.
+	"TestKafkaIO.*",
 }
 
 // CheckFilters checks if an integration test is filtered to be skipped, either
