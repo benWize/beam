@@ -1,14 +1,25 @@
 package org.apache.beam.sdk.io.pulsar;
 
 import com.google.auto.value.AutoValue;
+import org.apache.beam.sdk.coders.*;
 import org.apache.beam.sdk.transforms.*;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
 import org.apache.pulsar.client.api.Message;
 
+import org.apache.pulsar.client.api.MessageId;
+import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.common.api.EncryptionContext;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class PulsarIO {
 
@@ -17,17 +28,16 @@ public class PulsarIO {
 
     public static Read read() {
         return new AutoValue_PulsarIO_Read.Builder()
-                .setClientUrl(PulsarIOUtils.SERVICE_URL)
                 .build();
     }
 
     @AutoValue
     @SuppressWarnings({"rawtypes"})
-    public abstract static class Read extends PTransform<PBegin, PCollection<Message<byte[]>>> {
+    public abstract static class Read extends PTransform<PBegin, PCollection<PulsarMessage>> {
 
         abstract @Nullable String getClientUrl();
-        abstract String getTopic();
-        abstract long getStartTimestamp();
+        abstract @Nullable String getTopic();
+        abstract @Nullable Long getStartTimestamp();
         abstract @Nullable SerializableFunction<Message<byte[]>, Instant> getExtractOutputTimestampFn();
         abstract Builder builder();
 
@@ -64,24 +74,23 @@ public class PulsarIO {
             return withExtractOutputTimestampFn(ExtractOutputTimestampFn.useProcessingTime());
         }
 
-
-
         @Override
-        public PCollection<Message<byte[]>> expand(PBegin input) {
+        public PCollection<PulsarMessage> expand(PBegin input) {
             return input
                     .apply(
                             Create.of(
                                     PulsarSourceDescriptor.of(getTopic(), getStartTimestamp(), getClientUrl())))
                     .apply(
                             ParDo.of(
-                                    new ReadFromPulsarDoFn(this)));
+                                    new ReadFromPulsarDoFn(this)))
+                    .setCoder(PulsarMessageCoder.of());
+
         }
     }
 
 
     public static Write write() {
         return new AutoValue_PulsarIO_Write.Builder()
-                .setClientUrl(PulsarIOUtils.SERVICE_URL)
                 .build();
     }
 
@@ -127,5 +136,4 @@ public class PulsarIO {
             return record -> new Instant(record.getPublishTime());
         }
     }
-
 }

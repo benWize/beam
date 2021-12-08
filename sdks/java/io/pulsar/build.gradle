@@ -3,19 +3,23 @@ applyJavaNature(automaticModuleName: 'org.apache.beam.sdk.io.pulsar')
 
 def pulsarVersion = '2.8.0'
 
+
 dependencies {
     compile group: 'org.apache.pulsar', name: 'pulsar-client', version: pulsarVersion
     compile group: 'org.apache.pulsar', name: 'pulsar-client-admin', version: pulsarVersion
     compile project(path: ":sdks:java:core", configuration: "shadow")
-
+    compile project(":runners:core-construction-java")
 
     testCompile project(path: ":sdks:java:io:common", configuration: "testRuntime")
+    testCompile project(":runners:core-construction-java")
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-
+    testRuntimeOnly project(path: ":runners:direct-java", configuration: "shadow")
     testImplementation "org.testcontainers:pulsar:1.15.3"
+    testImplementation "org.assertj:assertj-core:2.9.1"
+
 }
 
 test {
-    useJUnitPlatform()
+    include '**/*IT.class'
 }

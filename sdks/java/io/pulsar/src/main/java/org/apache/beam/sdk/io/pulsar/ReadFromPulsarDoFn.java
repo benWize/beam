@@ -1,5 +1,6 @@
 package org.apache.beam.sdk.io.pulsar;
 
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.range.OffsetRange;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
@@ -8,15 +9,19 @@ import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.pulsar.client.api.*;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Suppliers;
+import org.joda.time.Duration;
 import org.joda.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.*;
 
 @DoFn.UnboundedPerElement
-public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, Message<byte[]>> {
+public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessage> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReadFromPulsarDoFn.class);
     private PulsarClient client;
     private String topic;
     private String clientUrl;
@@ -27,23 +32,26 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, Message<byt
         this.extractOutputTimestampFn = transform.getExtractOutputTimestampFn();
         this.clientUrl = transform.getClientUrl();
         this.topic = transform.getTopic();
+        this.consumer_no = 0;
 
     }
 
     // Open connection to Pulsar clients
     @Setup
-    private void initPulsarClients() throws PulsarClientException {
+    public void initPulsarClients() throws Exception {
         if(this.clientUrl == null) {
             this.clientUrl = PulsarIOUtils.SERVICE_URL;
         }
-        this.client = PulsarClient.builder()
-                .serviceUrl(clientUrl)
-                .build();
+        if(this.client == null) {
+            this.client = PulsarClient.builder()
+                    .serviceUrl(clientUrl)
+                    .build();
+        }
     }
 
     // Close connection to Pulsar clients
     @Teardown
-    public void teardown() throws PulsarClientException {
+    public void teardown() throws Exception {
         this.client.close();
     }
 
@@ -77,36 +85,50 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, Message<byt
         return builder.create();
     }
 
+    @GetRestrictionCoder
+    public Coder<OffsetRange> getRestrictionCoder() {
+        return new OffsetRange.Coder();
+    }
+
     @ProcessElement
     public ProcessContinuation processElement(
             @Element PulsarSourceDescriptor pulsarSourceDescriptor,
             RestrictionTracker<OffsetRange, Long> tracker,
-            OutputReceiver<Message<byte[]>> output) throws IOException {
-
+            OutputReceiver<PulsarMessage> output) throws IOException {
+        //initPulsarClients();
         long startTimestamp = tracker.currentRestriction().getFrom();
         String topicPartition = pulsarSourceDescriptor.getTopic();
         //List<String> topicPartitions = client.getPartitionsForTopic(pulsarRecord.getTopic()).join();
         //for(String topicPartition:topicPartitions) {
             try(Reader<byte[]> reader = newReader(client, topicPartition)) {
-                reader.seek(startTimestamp);
+                if(startTimestamp != 0) {
+                     reader.seek(startTimestamp);
+                }
                 while (true) {
+                    if(reader.hasReachedEndOfTopic()) {
+                        reader.close();
+                        return ProcessContinuation.stop();
+                    }
                     Message<byte[]> message = reader.readNext();
-                    MessageId messageId = message.getMessageId();
+                    if(message == null) {
+                        return ProcessContinuation.resume();
+                    }
                     long currentTimestampOffset = message.getPublishTime();
                     // if tracker.tryclaim() return true, sdf must execute work otherwise
                     // doFn must exit processElement() without doing any work associated
                     // or claiming more work
+                    System.out.println(new String(message.getValue(), StandardCharsets.UTF_8));
+                    System.out.println(currentTimestampOffset);
                     if (!tracker.tryClaim(currentTimestampOffset)) {
+                        reader.close();
                         return ProcessContinuation.stop();
                     }
-
+                    PulsarMessage pulsarMessage = new PulsarMessage(message.getTopicName(), message.getPublishTime(), message);
                     Instant outputTimestamp = extractOutputTimestampFn.apply(message);
-                    output.outputWithTimestamp(message, outputTimestamp);
+                    output.outputWithTimestamp(pulsarMessage, outputTimestamp);
 
                 }
-            }
-        //}
-    }
+            } 
 
     @GetInitialWatermarkEstimatorState
     public Instant getInitialWatermarkEstimatorState(@Timestamp Instant currentElementTimestamp) {
@@ -131,22 +153,22 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, Message<byt
     private static class PulsarLatestOffsetEstimator implements GrowableOffsetRangeTracker.RangeEndEstimator {
 
         private final Supplier<Message<byte[]>> memoizedBacklog;
-        private final Reader<byte[]> readerLatestMsg;
+        private final Consumer<byte[]> readerLatestMsg;
 
-        private PulsarLatestOffsetEstimator(PulsarClient client, String topic) throws PulsarClientException {
-            this.readerLatestMsg = client.newReader()
-                                        .startMessageId(MessageId.latest)
-                                        .subscriptionName("PulsarLatestOffsetEstimatorReader")
+        private PulsarLatestOffsetEstimator(PulsarClient client, String topic, int consumerNo) throws PulsarClientException {
+            this.readerLatestMsg = client.newConsumer()
+                                        .subscriptionInitialPosition(SubscriptionInitialPosition.Latest)
+                                        .subscriptionName("PulsarLatestOffsetEstimator")
                                         .topic(topic)
-                                        .create();
+                                        .subscribe();
             this.memoizedBacklog = Suppliers.memoizeWithExpiration(
                     () -> {
                         Message<byte[]> latestMessage = null;
                         try {
-                            latestMessage = readerLatestMsg.readNext();
-                        } catch (PulsarClientException e) {
+                            latestMessage = readerLatestMsg.receive();
+                        } catch (Exception e) {
                             //TODO change error log
-                            e.printStackTrace();
+                            //e.printStackTrace();
                         }
                         return latestMessage;
                     }, 1,
@@ -159,7 +181,7 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, Message<byt
                 this.readerLatestMsg.close();
             } catch (IOException e) {
                 //TODO add error log
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
 
