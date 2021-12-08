@@ -154,7 +154,7 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
         private final Supplier<Message<byte[]>> memoizedBacklog;
         private final Consumer<byte[]> readerLatestMsg;
 
-        private PulsarLatestOffsetEstimator(PulsarClient client, String topic, int consumerNo) throws PulsarClientException {
+        private PulsarLatestOffsetEstimator(PulsarClient client, String topic) throws PulsarClientException {
             this.readerLatestMsg = client.newConsumer()
                                         .subscriptionInitialPosition(SubscriptionInitialPosition.Latest)
                                         .subscriptionName("PulsarLatestOffsetEstimator")
