@@ -9,7 +9,6 @@ import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.pulsar.client.api.*;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Suppliers;
-import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
         this.extractOutputTimestampFn = transform.getExtractOutputTimestampFn();
         this.clientUrl = transform.getClientUrl();
         this.topic = transform.getTopic();
-        this.consumer_no = 0;
 
     }
 
@@ -100,35 +98,36 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
         String topicPartition = pulsarSourceDescriptor.getTopic();
         //List<String> topicPartitions = client.getPartitionsForTopic(pulsarRecord.getTopic()).join();
         //for(String topicPartition:topicPartitions) {
-            try(Reader<byte[]> reader = newReader(client, topicPartition)) {
-                if(startTimestamp != 0) {
-                     reader.seek(startTimestamp);
+        try (Reader<byte[]> reader = newReader(client, topicPartition)) {
+            if (startTimestamp != 0) {
+                reader.seek(startTimestamp);
+            }
+            while (true) {
+                if (reader.hasReachedEndOfTopic()) {
+                    reader.close();
+                    return ProcessContinuation.stop();
                 }
-                while (true) {
-                    if(reader.hasReachedEndOfTopic()) {
-                        reader.close();
-                        return ProcessContinuation.stop();
-                    }
-                    Message<byte[]> message = reader.readNext();
-                    if(message == null) {
-                        return ProcessContinuation.resume();
-                    }
-                    long currentTimestampOffset = message.getPublishTime();
-                    // if tracker.tryclaim() return true, sdf must execute work otherwise
-                    // doFn must exit processElement() without doing any work associated
-                    // or claiming more work
-                    System.out.println(new String(message.getValue(), StandardCharsets.UTF_8));
-                    System.out.println(currentTimestampOffset);
-                    if (!tracker.tryClaim(currentTimestampOffset)) {
-                        reader.close();
-                        return ProcessContinuation.stop();
-                    }
-                    PulsarMessage pulsarMessage = new PulsarMessage(message.getTopicName(), message.getPublishTime(), message);
-                    Instant outputTimestamp = extractOutputTimestampFn.apply(message);
-                    output.outputWithTimestamp(pulsarMessage, outputTimestamp);
+                Message<byte[]> message = reader.readNext();
+                if (message == null) {
+                    return ProcessContinuation.resume();
+                }
+                long currentTimestampOffset = message.getPublishTime();
+                // if tracker.tryclaim() return true, sdf must execute work otherwise
+                // doFn must exit processElement() without doing any work associated
+                // or claiming more work
+                System.out.println(new String(message.getValue(), StandardCharsets.UTF_8));
+                System.out.println(currentTimestampOffset);
+                if (!tracker.tryClaim(currentTimestampOffset)) {
+                    reader.close();
+                    return ProcessContinuation.stop();
+                }
+                PulsarMessage pulsarMessage = new PulsarMessage(message.getTopicName(), message.getPublishTime(), message);
+                Instant outputTimestamp = extractOutputTimestampFn.apply(message);
+                output.outputWithTimestamp(pulsarMessage, outputTimestamp);
 
-                }
-            } 
+            }
+        }
+    }
 
     @GetInitialWatermarkEstimatorState
     public Instant getInitialWatermarkEstimatorState(@Timestamp Instant currentElementTimestamp) {
