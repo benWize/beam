@@ -29,24 +29,23 @@ import 'package:playground/modules/editor/repository/code_repository/run_code_er
 import 'package:playground/modules/editor/repository/code_repository/run_code_request.dart';
 import 'package:playground/modules/editor/repository/code_repository/run_code_result.dart';
 import 'package:playground/modules/sdk/models/sdk.dart';
+import 'package:playground/utils/replace_incorrect_symbols.dart';
 
 const kGeneralError = 'Failed to execute code';
 
 class GrpcCodeClient implements CodeClient {
-  grpc.PlaygroundServiceClient createClient(SDK? sdk) {
-    String apiClientURL = kApiClientURL;
-    if (sdk != null) {
-      apiClientURL = sdk.getRoute;
-    }
-    IisWorkaroundChannel channel = IisWorkaroundChannel.xhr(
-      Uri.parse(apiClientURL),
+  late final grpc.PlaygroundServiceClient _defaultClient;
+
+  GrpcCodeClient() {
+    final channel = IisWorkaroundChannel.xhr(
+      Uri.parse(kApiClientURL),
     );
-    return grpc.PlaygroundServiceClient(channel);
+    _defaultClient = grpc.PlaygroundServiceClient(channel);
   }
 
   @override
   Future<RunCodeResponse> runCode(RunCodeRequestWrapper request) {
-    return _runSafely(() => createClient(request.sdk)
+    return _runSafely(() => _createRunCodeClient(request.sdk)
         .runCode(_toGrpcRequest(request))
         .then((response) => RunCodeResponse(response.pipelineUuid)));
   }
@@ -56,7 +55,7 @@ class GrpcCodeClient implements CodeClient {
     String pipelineUuid,
     RunCodeRequestWrapper request,
   ) {
-    return _runSafely(() => createClient(request.sdk)
+    return _runSafely(() => _defaultClient
         .checkStatus(grpc.CheckStatusRequest(pipelineUuid: pipelineUuid))
         .then(
           (response) => CheckStatusResponse(_toClientStatus(response.status)),
@@ -68,11 +67,11 @@ class GrpcCodeClient implements CodeClient {
     String pipelineUuid,
     RunCodeRequestWrapper request,
   ) {
-    return _runSafely(() => createClient(request.sdk)
+    return _runSafely(() => _defaultClient
         .getCompileOutput(
           grpc.GetCompileOutputRequest(pipelineUuid: pipelineUuid),
         )
-        .then((response) => OutputResponse(response.output)));
+        .then((response) => _toOutputResponse(response.output)));
   }
 
   @override
@@ -80,20 +79,27 @@ class GrpcCodeClient implements CodeClient {
     String pipelineUuid,
     RunCodeRequestWrapper request,
   ) {
-    return _runSafely(() => createClient(request.sdk)
-        .getRunOutput(grpc.GetRunOutputRequest(pipelineUuid: pipelineUuid))
-        .then((response) => OutputResponse(response.output)));
+    return _runSafely(() => _defaultClient
+            .getRunOutput(grpc.GetRunOutputRequest(pipelineUuid: pipelineUuid))
+            .then((response) => _toOutputResponse(response.output))
+            .catchError((err) {
+          print(err);
+          return _toOutputResponse('');
+        }));
   }
 
   @override
   Future<OutputResponse> getLogOutput(
-      String pipelineUuid,
-      RunCodeRequestWrapper request,
+    String pipelineUuid,
+    RunCodeRequestWrapper request,
   ) {
-    return _runSafely(() => createClient(request.sdk)
-        .getLogs(grpc.GetLogsRequest(pipelineUuid: pipelineUuid))
-        .then((response) => OutputResponse(response.output))
-        .catchError((err) => OutputResponse('')));
+    return _runSafely(() => _defaultClient
+            .getLogs(grpc.GetLogsRequest(pipelineUuid: pipelineUuid))
+            .then((response) => _toOutputResponse(response.output))
+            .catchError((err) {
+          print(err);
+          return _toOutputResponse('');
+        }));
   }
 
   @override
@@ -101,9 +107,9 @@ class GrpcCodeClient implements CodeClient {
     String pipelineUuid,
     RunCodeRequestWrapper request,
   ) {
-    return _runSafely(() => createClient(request.sdk)
+    return _runSafely(() => _defaultClient
         .getRunError(grpc.GetRunErrorRequest(pipelineUuid: pipelineUuid))
-        .then((response) => OutputResponse(response.output)));
+        .then((response) => _toOutputResponse(response.output)));
   }
 
   Future<T> _runSafely<T>(Future<T> Function() invoke) async {
@@ -114,6 +120,20 @@ class GrpcCodeClient implements CodeClient {
     } on Exception catch (_) {
       throw RunCodeError(null);
     }
+  }
+
+  /// Run Code request should use different urls for each sdk
+  /// instead of the default one, because we need to code
+  /// sdk services for it
+  grpc.PlaygroundServiceClient _createRunCodeClient(SDK? sdk) {
+    String apiClientURL = kApiClientURL;
+    if (sdk != null) {
+      apiClientURL = sdk.getRoute;
+    }
+    IisWorkaroundChannel channel = IisWorkaroundChannel.xhr(
+      Uri.parse(apiClientURL),
+    );
+    return grpc.PlaygroundServiceClient(channel);
   }
 
   grpc.RunCodeRequest _toGrpcRequest(RunCodeRequestWrapper request) {
@@ -162,5 +182,9 @@ class GrpcCodeClient implements CodeClient {
         return RunCodeStatus.unknownError;
     }
     return RunCodeStatus.unspecified;
+  }
+
+  OutputResponse _toOutputResponse(String response) {
+    return OutputResponse(replaceIncorrectSymbols(response));
   }
 }
