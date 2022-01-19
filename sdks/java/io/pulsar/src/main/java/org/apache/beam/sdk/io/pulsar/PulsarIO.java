@@ -1,7 +1,6 @@
 package org.apache.beam.sdk.io.pulsar;
 
 import com.google.auto.value.AutoValue;
-import org.apache.beam.sdk.coders.*;
 import org.apache.beam.sdk.transforms.*;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
@@ -9,8 +8,6 @@ import org.apache.beam.sdk.values.PDone;
 import org.apache.pulsar.client.api.Message;
 
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.common.api.EncryptionContext;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
@@ -36,19 +33,29 @@ public class PulsarIO {
     public abstract static class Read extends PTransform<PBegin, PCollection<PulsarMessage>> {
 
         abstract @Nullable String getClientUrl();
+        abstract @Nullable String getAdminUrl();
         abstract @Nullable String getTopic();
         abstract @Nullable Long getStartTimestamp();
+        abstract @Nullable Long getEndTimestamp();
+        abstract @Nullable MessageId getEndMessageId();
         abstract @Nullable SerializableFunction<Message<byte[]>, Instant> getExtractOutputTimestampFn();
         abstract Builder builder();
+
 
         @AutoValue.Builder
         abstract static class Builder {
             abstract Builder setClientUrl(String url);
+            abstract Builder setAdminUrl(String url);
             abstract Builder setTopic(String topic);
             abstract Builder setStartTimestamp(Long timestamp);
+            abstract Builder setEndTimestamp(Long timestamp);
+            abstract Builder setEndMessageId(MessageId msgId);
             abstract Builder setExtractOutputTimestampFn(SerializableFunction<Message<byte[]>, Instant> fn);
             abstract Read build();
         }
+
+
+        public Read withAdminUrl(String url) { return builder().setAdminUrl(url).build(); }
 
         public Read withClientUrl(String url) {
             return builder().setClientUrl(url).build();
@@ -60,6 +67,14 @@ public class PulsarIO {
 
         public Read withStartTimestamp(Long timestamp) {
             return builder().setStartTimestamp(timestamp).build();
+        }
+
+        public Read withEndTimestamp(Long timestamp) {
+            return builder().setEndTimestamp(timestamp).build();
+        }
+
+        public Read withEndMessageId(MessageId msgId) {
+            return builder().setEndMessageId(msgId).build();
         }
 
         public Read withExtractOutputTimestampFn(SerializableFunction<Message<byte[]>, Instant> fn) {
@@ -79,7 +94,7 @@ public class PulsarIO {
             return input
                     .apply(
                             Create.of(
-                                    PulsarSourceDescriptor.of(getTopic(), getStartTimestamp(), getClientUrl())))
+                                    PulsarSourceDescriptor.of(getTopic(), getStartTimestamp(), getEndTimestamp(), getEndMessageId(), getClientUrl(), getAdminUrl())))
                     .apply(
                             ParDo.of(
                                     new ReadFromPulsarDoFn(this)))

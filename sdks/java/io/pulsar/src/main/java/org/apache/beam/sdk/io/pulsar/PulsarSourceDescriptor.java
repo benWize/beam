@@ -21,18 +21,35 @@ public abstract class PulsarSourceDescriptor implements Serializable {
     @Nullable
     abstract Long getStartOffset();
 
+    @SchemaFieldName("end_offset")
+    @Nullable
+    abstract Long getEndOffset();
+
+    @SchemaFieldName("end_messageid")
+    @Nullable
+    abstract MessageId getEndMessageId();
+
     @SchemaFieldName("client_url")
     abstract String getClientUrl();
+
+    @SchemaFieldName("admin_url")
+    abstract String getAdminUrl();
 
     public static PulsarSourceDescriptor of(
             String topic,
             Long startOffsetTimestamp,
-            String clientUrl
+            Long endOffsetTimestamp,
+            MessageId endMessageId,
+            String clientUrl,
+            String adminUrl
     ) {
         return new AutoValue_PulsarSourceDescriptor(
                 topic,
                 startOffsetTimestamp,
-                clientUrl
+                endOffsetTimestamp,
+                endMessageId,
+                clientUrl,
+                adminUrl
         );
     }
 
