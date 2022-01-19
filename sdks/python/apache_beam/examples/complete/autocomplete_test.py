@@ -21,7 +21,7 @@
 
 import unittest
 
-from nose.plugins.attrib import attr
+import pytest
 
 import apache_beam as beam
 from apache_beam.examples.complete import autocomplete
@@ -37,6 +37,7 @@ class AutocompleteTest(unittest.TestCase):
   KINGLEAR_HASH_SUM = 268011785062540
   KINGLEAR_INPUT = 'gs://dataflow-samples/shakespeare/kinglear.txt'
 
+  @pytest.mark.examples_postcommit
   def test_top_prefixes(self):
     with TestPipeline() as p:
       words = p | beam.Create(self.WORDS)
@@ -55,7 +56,7 @@ class AutocompleteTest(unittest.TestCase):
               ('that', ((1, 'that'), )),
           ]))
 
-  @attr('IT')
+  @pytest.mark.it_postcommit
   def test_autocomplete_it(self):
     with TestPipeline(is_integration_test=True) as p:
       words = p | beam.io.ReadFromText(self.KINGLEAR_INPUT)

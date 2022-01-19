@@ -18,6 +18,7 @@
 package org.apache.beam.runners.flink;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -61,6 +62,7 @@ import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
 import org.apache.flink.runtime.minicluster.MiniCluster;
 import org.apache.flink.runtime.minicluster.MiniClusterConfiguration;
+import org.apache.flink.runtime.util.EnvironmentInformation;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsIterableContaining;
 import org.joda.time.Instant;
@@ -82,6 +84,7 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings({
   "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "unused" // TODO(BEAM-13271): Remove when new version of errorprone is released (2.11.0)
 })
 public class FlinkSavepointTest implements Serializable {
 
@@ -143,6 +146,8 @@ public class FlinkSavepointTest implements Serializable {
 
   @Test
   public void testSavepointRestoreLegacy() throws Exception {
+    // Don't run on Flink 1.11. https://issues.apache.org/jira/browse/BEAM-10955
+    assumeFalse(EnvironmentInformation.getVersion().startsWith("1.11"));
     runSavepointAndRestore(false);
   }
 
@@ -171,7 +176,8 @@ public class FlinkSavepointTest implements Serializable {
       jobID = executeLegacy(pipeline);
     }
     oneShotLatch.await();
-    String savepointDir = takeSavepointAndCancelJob(jobID);
+    String savepointDir = takeSavepoint(jobID);
+    flinkCluster.cancelJob(jobID).get();
     ensureNoJobRunning();
 
     oneShotLatch = new CountDownLatch(1);
@@ -191,7 +197,7 @@ public class FlinkSavepointTest implements Serializable {
   private JobID executeLegacy(Pipeline pipeline) throws Exception {
     JobGraph jobGraph = getJobGraph(pipeline);
     flinkCluster.submitJob(jobGraph).get();
-    return jobGraph.getJobID();
+    return waitForJobToBeReady();
   }
 
   private JobID executePortable(Pipeline pipeline) throws Exception {
@@ -247,14 +253,15 @@ public class FlinkSavepointTest implements Serializable {
     }
   }
 
-  private String takeSavepointAndCancelJob(JobID jobID) throws Exception {
+  private String takeSavepoint(JobID jobID) throws Exception {
     Exception exception = null;
     // try multiple times because the job might not be ready yet
     for (int i = 0; i < 10; i++) {
       try {
-        return flinkCluster.triggerSavepoint(jobID, null, true).get();
+        return flinkCluster.triggerSavepoint(jobID, null, false).get();
       } catch (Exception e) {
         exception = e;
+        LOG.debug("Exception while triggerSavepoint, trying again", e);
         Thread.sleep(100);
       }
     }
@@ -304,6 +311,7 @@ public class FlinkSavepointTest implements Serializable {
                   "TimerStage",
                   ParDo.of(
                       new DoFn<KV<String, Void>, KV<String, Long>>() {
+
                         @StateId("nextInteger")
                         private final StateSpec<ValueState<Long>> valueStateSpec =
                             StateSpecs.value();

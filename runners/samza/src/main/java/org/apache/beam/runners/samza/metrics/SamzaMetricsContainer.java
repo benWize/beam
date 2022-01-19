@@ -42,7 +42,6 @@ import org.apache.samza.metrics.MetricsRegistryMap;
 })
 public class SamzaMetricsContainer {
   private static final String BEAM_METRICS_GROUP = "BeamMetrics";
-  private static final String DELIMITER = "-";
 
   private final MetricsContainerStepMap metricsContainers = new MetricsContainerStepMap();
   private final MetricsRegistryMap metricsRegistry;
@@ -73,7 +72,7 @@ public class SamzaMetricsContainer {
     final GaugeUpdater updateGauge = new GaugeUpdater();
     results.getGauges().forEach(updateGauge);
 
-    // TODO: add distribution metrics to Samza
+    // TODO(BEAM-12614): add distribution metrics to Samza
   }
 
   private class CounterUpdater implements Consumer<MetricResult<Long>> {

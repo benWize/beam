@@ -31,8 +31,10 @@ from google.protobuf import text_format  # type: ignore # not in typeshed
 from apache_beam.internal import pickler
 from apache_beam.io import filesystems
 from apache_beam.options.pipeline_options import DebugOptions
+from apache_beam.options.pipeline_options import GoogleCloudOptions
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import ProfilingOptions
+from apache_beam.options.pipeline_options import SetupOptions
 from apache_beam.options.value_provider import RuntimeValueProvider
 from apache_beam.portability.api import endpoints_pb2
 from apache_beam.runners.internal import names
@@ -43,6 +45,7 @@ from apache_beam.utils import profiler
 # This module is experimental. No backwards-compatibility guarantees.
 
 _LOGGER = logging.getLogger(__name__)
+_ENABLE_GOOGLE_CLOUD_PROFILER = 'enable_google_cloud_profiler'
 
 
 def create_harness(environment, dry_run=False):
@@ -74,6 +77,7 @@ def create_harness(environment, dry_run=False):
   RuntimeValueProvider.set_runtime_options(pipeline_options_dict)
   sdk_pipeline_options = PipelineOptions.from_dictionary(pipeline_options_dict)
   filesystems.FileSystems.set_options(sdk_pipeline_options)
+  pickler.set_library(sdk_pipeline_options.view_as(SetupOptions).pickle_library)
 
   if 'SEMI_PERSISTENT_DIRECTORY' in environment:
     semi_persistent_directory = environment['SEMI_PERSISTENT_DIRECTORY']
@@ -128,7 +132,11 @@ def main(unused_argv):
   """Main entry point for SDK Fn Harness."""
   fn_log_handler, sdk_harness, sdk_pipeline_options = create_harness(os.environ)
   experiments = sdk_pipeline_options.view_as(DebugOptions).experiments or []
-  if 'enable_google_cloud_profiler' in experiments:
+  dataflow_service_options = (
+      sdk_pipeline_options.view_as(GoogleCloudOptions).dataflow_service_options
+      or [])
+  if (_ENABLE_GOOGLE_CLOUD_PROFILER in experiments) or (
+      _ENABLE_GOOGLE_CLOUD_PROFILER in dataflow_service_options):
     try:
       import googlecloudprofiler
       job_id = os.environ["JOB_ID"]
@@ -136,6 +144,7 @@ def main(unused_argv):
       if job_id and job_name:
         googlecloudprofiler.start(
             service=job_name, service_version=job_id, verbose=1)
+        _LOGGER.info('Turning on Google Cloud Profiler.')
       else:
         raise RuntimeError('Unable to find the job id or job name from envvar.')
     except Exception as e:  # pylint: disable=broad-except
