@@ -21,6 +21,8 @@ import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+@RunWith(JUnit4.class)
 public class ReadFromPulsarDoFnTest {
 
     public static final String SERVICE_URL = "pulsar://localhost:6650";
@@ -51,6 +54,7 @@ public class ReadFromPulsarDoFnTest {
     @Before
     public void setup() throws Exception {
         dofnInstance.setReader(mockReader);
+        mockReader.reset();
     }
 
     @Test
@@ -87,15 +91,43 @@ public class ReadFromPulsarDoFnTest {
     @Test
     public void testProcessElement() throws Exception {
         MockOutputReceiver receiver = new MockOutputReceiver();
+        //if(mockReader.hasEmptyRecords()) mockReader.setMock(TOPIC, numberOfMessages);
         long startOffset = mockReader.getStartTimestamp();
         long endOffset = mockReader.getEndTimestamp();
         OffsetRangeTracker tracker =
                 new OffsetRangeTracker(new OffsetRange(startOffset, endOffset));
-        PulsarSourceDescriptor descriptor = PulsarSourceDescriptor.of(TOPIC, startOffset, null, null, SERVICE_URL, ADMIN_URL);
+        PulsarSourceDescriptor descriptor = PulsarSourceDescriptor.of(
+                TOPIC,
+                startOffset,
+                endOffset,
+                null,
+                SERVICE_URL,
+                ADMIN_URL);
         DoFn.ProcessContinuation result = dofnInstance.processElement(
                 descriptor, tracker,null, (DoFn.OutputReceiver) receiver);
         assertEquals(DoFn.ProcessContinuation.stop(), result);
-        assertEquals(3, receiver.getOutputs().size());
+        assertEquals(numberOfMessages-1, receiver.getOutputs().size());
+    }
+
+    @Test
+    public void testProcessElementWhenEndMessageIdIsDefined() throws Exception{
+        MockOutputReceiver receiver = new MockOutputReceiver();
+        OffsetRangeTracker tracker = new OffsetRangeTracker(
+                new OffsetRange(0L, Long.MAX_VALUE)
+        );
+        MessageId endMessageId = DefaultImplementation.newMessageId(50L, 50L, 50);
+        DoFn.ProcessContinuation result = dofnInstance.processElement(
+                PulsarSourceDescriptor.of(TOPIC,
+                        null,
+                        null,
+                        endMessageId,
+                        SERVICE_URL,
+                        ADMIN_URL),
+                tracker,
+                null,
+                (DoFn.OutputReceiver) receiver);
+        assertEquals(DoFn.ProcessContinuation.stop(), result);
+        assertEquals(50, receiver.getOutputs().size());
     }
 
     @Test
@@ -140,27 +172,6 @@ public class ReadFromPulsarDoFnTest {
         assertEquals(DoFn.ProcessContinuation.stop(), result);
     }
 
-    @Test
-    public void testProcessElementWhenEndMessageIdIsDefined() throws Exception{
-        MockOutputReceiver receiver = new MockOutputReceiver();
-        OffsetRangeTracker tracker = new OffsetRangeTracker(
-                new OffsetRange(0L, Long.MAX_VALUE)
-        );
-        MessageId endMessageId = DefaultImplementation.newMessageId(50L, 50L, 50);
-        DoFn.ProcessContinuation result = dofnInstance.processElement(
-                PulsarSourceDescriptor.of(TOPIC,
-                        null,
-                        null,
-                        endMessageId,
-                        SERVICE_URL,
-                        ADMIN_URL),
-                tracker,
-                null,
-                (DoFn.OutputReceiver) receiver);
-        assertEquals(DoFn.ProcessContinuation.stop(), result);
-        assertEquals(50, receiver.getOutputs().size());
-    }
-
     private static class MockOutputReceiver implements DoFn.OutputReceiver<PulsarMessage> {
 
         private final List<PulsarMessage> records = new ArrayList<>();
@@ -184,6 +195,8 @@ public class ReadFromPulsarDoFnTest {
         private String topic;
         private List<MockMessage> mockMessages = new ArrayList<>();
         private int currentMsg;
+        private long startTimestamp;
+        private long endTimestamp;
         private boolean reachedEndOfTopic;
 
         public SimpleMockPulsarReader(String topic, int numberOfMessages) {
@@ -198,9 +211,18 @@ public class ReadFromPulsarDoFnTest {
             this.topic = topic;
             for(int i=0; i<numberOfMessages; i++) {
                 long timestamp = Instant.now().plus(Duration.standardSeconds(i)).getMillis();
+                if(i==0) startTimestamp = timestamp;
+                else if(i==99) endTimestamp = timestamp;
                 mockMessages.add(new MockMessage(topic, timestamp, Long.valueOf(i), Long.valueOf(i), i));
             }
             currentMsg = 0;
+        }
+
+        public void reset() {
+            this.reachedEndOfTopic = false;
+            this.currentMsg = 0;
+            emptyMockRecords();
+            setMock(TOPIC, numberOfMessages);
         }
 
         public void emptyMockRecords() {
@@ -208,12 +230,11 @@ public class ReadFromPulsarDoFnTest {
         }
 
         public long getStartTimestamp() {
-            System.out.println(mockMessages.get(0).getPublishTime());
-            return mockMessages.get(0).getPublishTime();
+            return this.startTimestamp;
         }
 
         public long getEndTimestamp() {
-            return mockMessages.get(mockMessages.size()-1).getPublishTime();
+            return this.endTimestamp;
         }
 
         @Override
@@ -223,11 +244,13 @@ public class ReadFromPulsarDoFnTest {
 
         @Override
         public Message<byte[]> readNext() throws PulsarClientException {
-            if(currentMsg < mockMessages.size()) {
+            if(currentMsg == 0 && mockMessages.isEmpty()) return null;
+
+            Message<byte[]> msg = mockMessages.get(currentMsg);
+            if(currentMsg <= mockMessages.size()-1) {
                 currentMsg++;
             }
-            if(currentMsg == 0) return null;
-            return mockMessages.get(currentMsg);
+            return msg;
         }
 
         @Override
