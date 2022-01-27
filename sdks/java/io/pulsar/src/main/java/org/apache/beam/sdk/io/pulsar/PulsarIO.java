@@ -11,13 +11,6 @@ import org.apache.pulsar.client.api.MessageId;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 public class PulsarIO {
 
     /** Static class, prevent instantiation. */
@@ -111,7 +104,7 @@ public class PulsarIO {
 
     @AutoValue
     @SuppressWarnings({"rawtypes"})
-    public abstract static class Write extends PTransform<PCollection<Message<byte[]>>, PDone> {
+    public abstract static class Write extends PTransform<PCollection<byte[]>, PDone> {
 
         abstract @Nullable String getTopic();
         abstract String getClientUrl();
@@ -134,8 +127,7 @@ public class PulsarIO {
         }
 
         @Override
-        public PDone expand(PCollection<Message<byte[]>> input) {
-            //TODO checkargument (missing topic?)
+        public PDone expand(PCollection<byte[]> input) {
             input.apply(ParDo.of(new PulsarWriter(this)));
             return PDone.in(input.getPipeline());
         }

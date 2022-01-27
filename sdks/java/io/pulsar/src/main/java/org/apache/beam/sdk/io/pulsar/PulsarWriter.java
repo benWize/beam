@@ -3,7 +3,7 @@ package org.apache.beam.sdk.io.pulsar;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.pulsar.client.api.*;
 
-public class PulsarWriter extends DoFn<Message<byte[]>, Void> {
+public class PulsarWriter extends DoFn<byte[], Void> {
 
     private Producer<byte[]> producer;
     private PulsarClient client;
@@ -17,7 +17,6 @@ public class PulsarWriter extends DoFn<Message<byte[]>, Void> {
 
     @Setup
     public void setup() throws PulsarClientException {
-        // CHANGE TO A GENERAL CLIENT
         client = PulsarClient.builder()
                 .serviceUrl(clientUrl)
                 .build();
@@ -31,11 +30,8 @@ public class PulsarWriter extends DoFn<Message<byte[]>, Void> {
 
     @ProcessElement
     public void processElement(ProcessContext ctx) throws Exception {
-        Message<byte[]> message = ctx.element();
-        Long offset = message.getPublishTime();
-        //TODO validate message exists
-
-        producer.send(message.getData());
+        byte[] message = ctx.element();
+        producer.send(message);
     }
 
     @Teardown

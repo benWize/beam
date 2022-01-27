@@ -1,10 +1,7 @@
 package org.apache.beam.sdk.io.pulsar;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.sun.scenario.effect.Offset;
 import org.apache.beam.sdk.coders.Coder;
-import org.apache.beam.sdk.io.range.ByteKey;
-import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.io.range.OffsetRange;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
@@ -15,16 +12,11 @@ import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.*;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Suppliers;
-import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.*;
 
 @DoFn.UnboundedPerElement
@@ -37,15 +29,16 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
     private String clientUrl;
     private String adminUrl;
 
+    @VisibleForTesting Reader<byte[]> readerTst;
+
     private final SerializableFunction<Message<byte[]>, Instant> extractOutputTimestampFn;
 
-    @VisibleForTesting
+
     public ReadFromPulsarDoFn(PulsarIO.Read transform) {
         this.extractOutputTimestampFn = transform.getExtractOutputTimestampFn();
         this.clientUrl = transform.getClientUrl();
         this.adminUrl = transform.getAdminUrl();
     }
-
 
     // Open connection to Pulsar clients
     @Setup
@@ -63,12 +56,16 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
         }
         if(this.admin == null) {
             this.admin = PulsarAdmin.builder()
-                    // .authentication(authPluginClassName,authParams)
                     .serviceHttpUrl(adminUrl)
                     .tlsTrustCertsFilePath(null)
                     .allowTlsInsecureConnection(false)
                     .build();
         }
+    }
+
+    @VisibleForTesting
+    public void setReader(Reader<byte[]> reader) throws Exception {
+        this.readerTst = reader;
     }
 
     // Close connection to Pulsar clients
@@ -108,6 +105,9 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
     }
 
     private Reader<byte[]> newReader(PulsarClient client, String topicPartition) throws PulsarClientException {
+        if(this.readerTst != null) {
+            return this.readerTst;
+        }
         ReaderBuilder<byte[]> builder = client.newReader().topic(topicPartition).startMessageId(MessageId.earliest);
         return builder.create();
     }
@@ -124,8 +124,6 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
             WatermarkEstimator watermarkEstimator,
             OutputReceiver<PulsarMessage> output) throws IOException {
         long startTimestamp = tracker.currentRestriction().getFrom();
-        long endTimestamp = tracker.currentRestriction().getTo();
-        long expectedTimestamp = startTimestamp;
         String topicDescriptor = pulsarSourceDescriptor.getTopic();
         try (Reader<byte[]> reader = newReader(client, topicDescriptor)) {
             if (startTimestamp > 0 ) {
@@ -136,31 +134,24 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
                     reader.close();
                     return ProcessContinuation.stop();
                 }
-                System.out.println("Expected " + expectedTimestamp);
-                System.out.println("End " + endTimestamp);
                 Message<byte[]> message = reader.readNext();
                 if (message == null) {
-                    System.out.println("------ message null | resume -------");
                     return ProcessContinuation.resume();
                 }
                 Long currentTimestamp = message.getPublishTime();
-                System.out.println("Current " + currentTimestamp);
                 // if tracker.tryclaim() return true, sdf must execute work otherwise
                 // doFn must exit processElement() without doing any work associated
                 // or claiming more work
                 //System.out.println(new String(message.getValue(), StandardCharsets.UTF_8));
                 if (!tracker.tryClaim(currentTimestamp)) {
                     reader.close();
-                    System.out.println("!TryClaim " + currentTimestamp);
                     return ProcessContinuation.stop();
                 }
                 if(pulsarSourceDescriptor.getEndMessageId() != null) {
-                    boolean isMsgIdGreatherThanEndMsgId = message.getMessageId().compareTo(pulsarSourceDescriptor.getEndMessageId()) == 1;
-                    if(isMsgIdGreatherThanEndMsgId) return ProcessContinuation.stop();
+                    MessageId currentMsgId = message.getMessageId();
+                    boolean hasReachedEndMessageId = currentMsgId.compareTo(pulsarSourceDescriptor.getEndMessageId()) == 0;
+                    if(hasReachedEndMessageId) return ProcessContinuation.stop();
                 }
-                expectedTimestamp = currentTimestamp;
-                System.out.println("EXPECTED AFTER " + expectedTimestamp);
-                System.out.println("------------------------------------");
                 PulsarMessage pulsarMessage = new PulsarMessage(message.getTopicName(), message.getPublishTime(), message);
                 Instant outputTimestamp = extractOutputTimestampFn.apply(message);
                 output.outputWithTimestamp(pulsarMessage, outputTimestamp);
@@ -201,10 +192,10 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
                         try {
                             lastMsg = admin.topics().examineMessage(topic, "latest", 1);
                         } catch (PulsarAdminException e) {
-                            System.out.println("ERROR ESTIM " + e.getMessage());
+                            LOGGER.error(e.getMessage());
                         }
                         return lastMsg;
-                    }, 1,
+                    } , 1,
                     TimeUnit.SECONDS);
         }
 
