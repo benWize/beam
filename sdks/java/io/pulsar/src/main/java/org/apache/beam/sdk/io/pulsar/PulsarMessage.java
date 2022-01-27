@@ -1,5 +1,6 @@
 package org.apache.beam.sdk.io.pulsar;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.pulsar.client.api.Message;
 
 /**
@@ -11,6 +12,7 @@ public class PulsarMessage {
     private Long publishTimestamp;
     private Object messageRecord;
 
+    @VisibleForTesting
     public PulsarMessage(String topic, Long publishTimestamp) {
         this.topic = topic;
         this.publishTimestamp = publishTimestamp;

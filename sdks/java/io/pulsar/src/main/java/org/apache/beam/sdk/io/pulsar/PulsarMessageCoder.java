@@ -11,7 +11,6 @@ public class PulsarMessageCoder extends CustomCoder<PulsarMessage> {
 
     private static final StringUtf8Coder stringCoder = StringUtf8Coder.of();
     private static final VarLongCoder longCoder = VarLongCoder.of();
-    //private final Coder<Message<byte[]>> messageCoder;
 
     public static PulsarMessageCoder of() {
         return new PulsarMessageCoder();
