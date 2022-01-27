@@ -1,67 +1,65 @@
 import org.apache.beam.sdk.PipelineResult;
-import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.io.pulsar.PulsarIO;
 import org.apache.beam.sdk.io.pulsar.PulsarMessage;
-import org.apache.beam.sdk.io.pulsar.PulsarMessageCoder;
-import org.apache.beam.sdk.io.pulsar.ReadFromPulsarDoFn;
 import org.apache.beam.sdk.metrics.*;
-import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
-import org.apache.beam.sdk.testing.TestStream;
+import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
-import org.apache.beam.sdk.transforms.windowing.FixedWindows;
-import org.apache.beam.sdk.transforms.windowing.IntervalWindow;
-import org.apache.beam.sdk.transforms.windowing.Window;
-import org.apache.beam.sdk.values.PCollection;
-import org.apache.pulsar.client.admin.PulsarAdmin;
-import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.*;
-import org.apache.pulsar.client.api.transaction.Transaction;
-import org.joda.time.Duration;
-import org.joda.time.Instant;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PulsarContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RunWith(JUnit4.class)
 public class PulsarIOTest {
 
     private final String TOPIC = "PULSAR_IO_TEST";
-    private final String SERVICE_URL = "pulsar://localhost:6650";
-    public final String SERVICE_HTTP_URL = "http://localhost:8080";
     protected static PulsarContainer pulsarContainer;
     protected static PulsarClient client;
 
     private long endExpectedTime = 0;
+    private long startTime = 0;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PulsarIOTest.class);
 
     @Rule public final transient TestPipeline testPipeline = TestPipeline.create();
 
-   // @Rule public final transient TestStream.Builder<PulsarMessage> testStream =
-     //       TestStream.create(PulsarMessageCoder.of());
+    public List<Message<byte[]>> receiveMessages() throws PulsarClientException {
+        if(client == null) initClient();
+        List<Message<byte[]>> messages = new ArrayList<>();
+        Consumer<byte[]> consumer = client.newConsumer()
+                .topic(TOPIC)
+                .subscriptionName("receiveMockMessageFn")
+                .subscribe();
+        while(consumer.hasReachedEndOfTopic()) {
+            Message<byte[]> msg = consumer.receive();
+            messages.add(msg);
+            try {
+                consumer.acknowledge(msg);
+            } catch (Exception e) {
+                consumer.negativeAcknowledge(msg);
+            }
+        }
+        return messages;
+    }
 
-    public List<PulsarMessage> produceMockMessages() throws PulsarClientException {
+    public List<PulsarMessage> produceMessages() throws PulsarClientException {
         client = initClient();
         Producer<byte[]> producer = client.newProducer()
                                         .topic(TOPIC)
@@ -83,16 +81,14 @@ public class PulsarIOTest {
                     endExpectedTime = message.getPublishTime();
                 } else {
                     inputs.add(new PulsarMessage(message.getTopicName(), message.getPublishTime(), message));
+                    if(i==0) startTime = message.getPublishTime();
                 }
             } catch (InterruptedException e) {
-                System.out.println(e.getMessage());
-                //e.printStackTrace();
+                LOGGER.error(e.getMessage());
             } catch (ExecutionException e) {
-                System.out.println(e.getMessage());
-                //e.printStackTrace();
+                LOGGER.error(e.getMessage());
             } catch (TimeoutException e) {
-                System.out.println(e.getMessage());
-                //e.printStackTrace();
+                LOGGER.error(e.getMessage());
             }
         }
         consumer.close();
@@ -104,7 +100,6 @@ public class PulsarIOTest {
     private static PulsarClient initClient() throws PulsarClientException {
         return PulsarClient.builder()
                 .serviceUrl(pulsarContainer.getPulsarBrokerUrl())
-                //.enableTransaction(true)
                 .build();
     }
 
@@ -143,7 +138,6 @@ public class PulsarIOTest {
             producer.send(message_txt.getBytes(StandardCharsets.UTF_8));
             CompletableFuture<Message> future = consumer.receiveAsync();
             Message message = future.get(5, TimeUnit.SECONDS);
-            System.out.println(new String(message.getData(), StandardCharsets.UTF_8));
             assertEquals(message_txt, new String(message.getData(), StandardCharsets.UTF_8));
             client.close();
         }
@@ -152,11 +146,12 @@ public class PulsarIOTest {
     @Test
     public void testReadFromSimpleTopic() {
         try {
-            List<PulsarMessage> inputsMock = produceMockMessages();
+            List<PulsarMessage> inputsMock = produceMessages();
             PulsarIO.Read reader = PulsarIO.read()
                     .withClientUrl(pulsarContainer.getPulsarBrokerUrl())
                     .withAdminUrl(pulsarContainer.getHttpServiceUrl())
                     .withTopic(TOPIC)
+                    .withStartTimestamp(startTime)
                     .withEndTimestamp(endExpectedTime)
                     .withPublishTime();
             testPipeline
@@ -174,8 +169,32 @@ public class PulsarIOTest {
             assertEquals(inputsMock.size(), (int) recordsCount);
 
         } catch (PulsarClientException e) {
-            System.out.println("------ Pulsar ERROR ------");
-            System.out.println(e.getMessage());
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testWriteFromTopic() {
+        try {
+            PulsarIO.Write writer = PulsarIO.write()
+                    .withClientUrl(pulsarContainer.getPulsarBrokerUrl())
+                    .withTopic(TOPIC);
+            int numberOfMessages = 100;
+            List<byte[]> messages = new ArrayList<>();
+            for(int i=0; i<numberOfMessages; i++) {
+                messages.add(("PULSAR_WRITER_TEST_"+i).getBytes(StandardCharsets.UTF_8));
+            }
+            testPipeline.apply(Create.of(messages))
+                    .apply(writer);
+
+            testPipeline.run();
+            List<Message<byte[]>> receiveMsgs = receiveMessages();
+            assertEquals(numberOfMessages, receiveMessages().size());
+            for(int i=0; i<numberOfMessages; i++) {
+                assertTrue(new String(receiveMsgs.get(i).getValue(), StandardCharsets.UTF_8).equals("PULSAR_WRITER_TEST_"+i));
+            }
+        } catch(Exception e) {
+            LOGGER.error(e.getMessage());
         }
     }
 

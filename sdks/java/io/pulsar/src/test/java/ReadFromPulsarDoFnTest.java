@@ -13,7 +13,6 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.internal.DefaultImplementation;
-import org.apache.pulsar.common.api.EncryptionContext;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
@@ -91,7 +90,6 @@ public class ReadFromPulsarDoFnTest {
     @Test
     public void testProcessElement() throws Exception {
         MockOutputReceiver receiver = new MockOutputReceiver();
-        //if(mockReader.hasEmptyRecords()) mockReader.setMock(TOPIC, numberOfMessages);
         long startOffset = mockReader.getStartTimestamp();
         long endOffset = mockReader.getEndTimestamp();
         OffsetRangeTracker tracker =
@@ -105,8 +103,9 @@ public class ReadFromPulsarDoFnTest {
                 ADMIN_URL);
         DoFn.ProcessContinuation result = dofnInstance.processElement(
                 descriptor, tracker,null, (DoFn.OutputReceiver) receiver);
+        int expectedResultWithoutCountingLastOffset = numberOfMessages-1;
         assertEquals(DoFn.ProcessContinuation.stop(), result);
-        assertEquals(numberOfMessages-1, receiver.getOutputs().size());
+        assertEquals(expectedResultWithoutCountingLastOffset, receiver.getOutputs().size());
     }
 
     @Test
@@ -319,153 +318,10 @@ public class ReadFromPulsarDoFnTest {
         }
 
         @Override
-        public void seek(Function<String, Object> function) throws PulsarClientException {
-
-        }
+        public void seek(Function<String, Object> function) throws PulsarClientException { }
 
         @Override
-        public void close() throws IOException {
-
-        }
+        public void close() throws IOException { }
     }
 
-    private static class MockMessage implements Message<byte[]> {
-
-        private String topic;
-        private long ledgerId = 1L;
-        private long entryId = 1L;
-        private int partitionIndex = 1;
-        private long timestamp;
-
-        public MockMessage (String topic, long timestamp, long ledgerId, long entryId, int partitionIndex) {
-            this.topic = topic;
-            this.ledgerId = ledgerId;
-            this.entryId = entryId;
-            this.partitionIndex = partitionIndex;
-            this.timestamp = timestamp;
-        }
-
-        public MockMessage(String topic) {
-            this.topic = topic;
-        }
-
-        @Override
-        public Map<String, String> getProperties() {
-            return null;
-        }
-
-        @Override
-        public boolean hasProperty(String name) {
-            return false;
-        }
-
-        @Override
-        public String getProperty(String name) {
-            return null;
-        }
-
-        @Override
-        public byte[] getData() {
-            return new byte[0];
-        }
-
-        @Override
-        public int size() {
-            return 0;
-        }
-
-        @Override
-        public byte[] getValue() {
-            return null;
-        }
-
-        @Override
-        public MessageId getMessageId() {
-            return DefaultImplementation.newMessageId(this.ledgerId,this.entryId,this.partitionIndex);
-        }
-
-        @Override
-        public long getPublishTime() { return timestamp;
-        }
-
-        @Override
-        public long getEventTime() {
-            return 0;
-        }
-
-        @Override
-        public long getSequenceId() {
-            return 0;
-        }
-
-        @Override
-        public String getProducerName() {
-            return null;
-        }
-
-        @Override
-        public boolean hasKey() {
-            return false;
-        }
-
-        @Override
-        public String getKey() {
-            return null;
-        }
-
-        @Override
-        public boolean hasBase64EncodedKey() {
-            return false;
-        }
-
-        @Override
-        public byte[] getKeyBytes() {
-            return new byte[0];
-        }
-
-        @Override
-        public boolean hasOrderingKey() {
-            return false;
-        }
-
-        @Override
-        public byte[] getOrderingKey() {
-            return new byte[0];
-        }
-
-        @Override
-        public String getTopicName() {
-            return topic;
-        }
-
-        @Override
-        public Optional<EncryptionContext> getEncryptionCtx() {
-            return Optional.empty();
-        }
-
-        @Override
-        public int getRedeliveryCount() {
-            return 0;
-        }
-
-        @Override
-        public byte[] getSchemaVersion() {
-            return new byte[0];
-        }
-
-        @Override
-        public boolean isReplicated() {
-            return false;
-        }
-
-        @Override
-        public String getReplicatedFrom() {
-            return null;
-        }
-
-        @Override
-        public void release() {
-
-        }
-    }
 }
