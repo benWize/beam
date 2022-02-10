@@ -8,29 +8,19 @@ import org.apache.beam.sdk.io.pulsar.ReadFromPulsarDoFn;
 import org.apache.beam.sdk.io.range.OffsetRange;
 import org.apache.beam.sdk.transforms.splittabledofn.OffsetRangeTracker;
 import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.internal.DefaultImplementation;
 import org.checkerframework.checker.initialization.qual.Initialized;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
-import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 @RunWith(JUnit4.class)
 public class ReadFromPulsarDoFnTest {
@@ -39,7 +29,8 @@ public class ReadFromPulsarDoFnTest {
     public static final String ADMIN_URL = "http://localhost:8080";
     public static final String TOPIC = "PULSARIO_READFROMPULSAR_TEST";
     public static final int numberOfMessages = 100;
-    public static final SimpleMockPulsarReader mockReader = new SimpleMockPulsarReader(TOPIC, numberOfMessages);
+    public static final MockPulsarReader mockReader = new MockPulsarReader(TOPIC, numberOfMessages);
+    private MockPulsarClient mockPulsarClient = new MockPulsarClient(mockReader);
     private final ReadFromPulsarDoFn dofnInstance = new ReadFromPulsarDoFn(readSourceDescriptor());
 
     private PulsarIO.Read readSourceDescriptor() {
@@ -52,7 +43,7 @@ public class ReadFromPulsarDoFnTest {
 
     @Before
     public void setup() throws Exception {
-        dofnInstance.setReader(mockReader);
+        dofnInstance.setClient(this.mockPulsarClient);
         mockReader.reset();
     }
 
@@ -187,141 +178,6 @@ public class ReadFromPulsarDoFnTest {
         public List<PulsarMessage> getOutputs() {
             return records;
         }
-    }
-
-    private static class SimpleMockPulsarReader implements Reader<byte[]> {
-
-        private String topic;
-        private List<MockMessage> mockMessages = new ArrayList<>();
-        private int currentMsg;
-        private long startTimestamp;
-        private long endTimestamp;
-        private boolean reachedEndOfTopic;
-
-        public SimpleMockPulsarReader(String topic, int numberOfMessages) {
-            this.setMock(topic, numberOfMessages);
-        }
-
-        public void setReachedEndOfTopic(boolean hasReachedEnd) {
-            this.reachedEndOfTopic = hasReachedEnd;
-        }
-
-        public void setMock(String topic, int numberOfMessages) {
-            this.topic = topic;
-            for(int i=0; i<numberOfMessages; i++) {
-                long timestamp = Instant.now().plus(Duration.standardSeconds(i)).getMillis();
-                if(i==0) startTimestamp = timestamp;
-                else if(i==99) endTimestamp = timestamp;
-                mockMessages.add(new MockMessage(topic, timestamp, Long.valueOf(i), Long.valueOf(i), i));
-            }
-            currentMsg = 0;
-        }
-
-        public void reset() {
-            this.reachedEndOfTopic = false;
-            this.currentMsg = 0;
-            emptyMockRecords();
-            setMock(TOPIC, numberOfMessages);
-        }
-
-        public void emptyMockRecords() {
-            this.mockMessages.clear();
-        }
-
-        public long getStartTimestamp() {
-            return this.startTimestamp;
-        }
-
-        public long getEndTimestamp() {
-            return this.endTimestamp;
-        }
-
-        @Override
-        public String getTopic() {
-            return this.topic;
-        }
-
-        @Override
-        public Message<byte[]> readNext() throws PulsarClientException {
-            if(currentMsg == 0 && mockMessages.isEmpty()) return null;
-
-            Message<byte[]> msg = mockMessages.get(currentMsg);
-            if(currentMsg <= mockMessages.size()-1) {
-                currentMsg++;
-            }
-            return msg;
-        }
-
-        @Override
-        public Message<byte[]> readNext(int timeout, TimeUnit unit) throws PulsarClientException {
-            return null;
-        }
-
-        @Override
-        public CompletableFuture<Message<byte[]>> readNextAsync() {
-            return null;
-        }
-
-        @Override
-        public CompletableFuture<Void> closeAsync() {
-            return null;
-        }
-
-        @Override
-        public boolean hasReachedEndOfTopic() {
-            return this.reachedEndOfTopic;
-        }
-
-        @Override
-        public boolean hasMessageAvailable() throws PulsarClientException {
-            return false;
-        }
-
-        @Override
-        public CompletableFuture<Boolean> hasMessageAvailableAsync() {
-            return null;
-        }
-
-        @Override
-        public boolean isConnected() {
-            return false;
-        }
-
-        @Override
-        public void seek(MessageId messageId) throws PulsarClientException {
-
-        }
-
-        @Override
-        public void seek(long timestamp) throws PulsarClientException {
-            for(int i=0; i< mockMessages.size(); i++) {
-                if(timestamp == mockMessages.get(i).getPublishTime()) {
-                    currentMsg = i;
-                    break;
-                }
-            }
-        }
-
-        @Override
-        public CompletableFuture<Void> seekAsync(MessageId messageId) {
-            return null;
-        }
-
-        @Override
-        public CompletableFuture<Void> seekAsync(long timestamp) {
-            return null;
-        }
-
-        @Override
-        public CompletableFuture<Void> seekAsync(Function<String, Object> function) {
-            return null;
-        }
-
-        @Override
-        public void seek(Function<String, Object> function) throws PulsarClientException { }
-
-        @Override
-        public void close() throws IOException { }
     }
 
 }

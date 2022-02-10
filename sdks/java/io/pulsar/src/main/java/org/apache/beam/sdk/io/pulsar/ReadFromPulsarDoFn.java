@@ -29,7 +29,6 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
     private String clientUrl;
     private String adminUrl;
 
-    @VisibleForTesting Reader<byte[]> readerTst;
 
     private final SerializableFunction<Message<byte[]>, Instant> extractOutputTimestampFn;
 
@@ -64,8 +63,8 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
     }
 
     @VisibleForTesting
-    public void setReader(Reader<byte[]> reader) throws Exception {
-        this.readerTst = reader;
+    public void setClient (PulsarClient client) {
+        this.client = client;
     }
 
     // Close connection to Pulsar clients
@@ -105,9 +104,6 @@ public class ReadFromPulsarDoFn extends DoFn<PulsarSourceDescriptor, PulsarMessa
     }
 
     private Reader<byte[]> newReader(PulsarClient client, String topicPartition) throws PulsarClientException {
-        if(this.readerTst != null) {
-            return this.readerTst;
-        }
         ReaderBuilder<byte[]> builder = client.newReader().topic(topicPartition).startMessageId(MessageId.earliest);
         return builder.create();
     }
