@@ -33,8 +33,6 @@ on:
 jobs:
   python-examples-direct:
     name: Python Direct Runner Examples
-    needs:
-      - check_gcp_variables
     runs-on: self-hosted
     timeout-minutes: 120
     steps:
