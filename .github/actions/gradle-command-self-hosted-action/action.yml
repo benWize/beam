@@ -19,6 +19,10 @@ runs:
       uses: actions/setup-python@v2
       with:
         python-version: "3.8"
+    - name: Install python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
     - name: Set Java Version
       uses: actions/setup-java@v1
       with:
