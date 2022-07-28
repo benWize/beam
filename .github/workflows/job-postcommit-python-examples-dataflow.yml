@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This workflow will run the Python examples tests with FlinkRunner.
+# This workflow will run the Python examples tests with DataflowRunner.
 
-name: PostCommit_Python_Examples_Flink
+name: PostCommit_Python_Examples_Dataflow
 
 on:
   schedule:
@@ -25,14 +25,14 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: 'v*'
-#  # TODO: Delete before merge
-#  pull_request:
-#    branches: ['master', 'release-*']
-#    tags: 'v*'
+  # TODO: Delete before merge
+  pull_request:
+    branches: ['master', 'release-*']
+    tags: 'v*'
 
 jobs:
-  python-examples-flink:
-    name: Python Flink Runner Examples
+  python-examples-dataflow:
+    name: Python Dataflow Runner Examples
     runs-on: self-hosted
     timeout-minutes: 120
     steps:
@@ -43,7 +43,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - name: Run :sdks:python:test-suites:portable:flinkExamplesPostCommit
+      - name: Run :sdks:python:test-suites:dataflow:examplesPostCommit
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: :sdks:python:test-suites:portable:flinkExamplesPostCommit
+          gradle-command: :sdks:python:test-suites:dataflow:examplesPostCommit
