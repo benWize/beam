@@ -25,10 +25,6 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: 'v*'
-#  # TODO: Delete before merge
-#  pull_request:
-#    branches: ['master', 'release-*']
-#    tags: 'v*'
 
 jobs:
   python-examples-flink:
@@ -36,8 +32,6 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 120
     steps:
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
       - name: Checkout code
         uses: actions/checkout@v2
         with:
