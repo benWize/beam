@@ -125,6 +125,28 @@ Service Account shall have following permissions ([IAM roles](https://cloud.goog
 | Java Wordcount Direct Runner | Runs Java WordCount example with Direct Runner.                                               | Yes              | Yes                   | Yes           | -                        |
 | Java Wordcount Dataflow      | Runs Java WordCount example with DataFlow Runner.                                             | -                | Yes                   | Yes           | Yes                      |
 
+### PreCommit Jobs
+
+#### Runs python examples dataflow - [job-postcommit-python-examples-dataflow.yml](.github/workflows/job-postcommit-python-examples-dataflow.yml) [![PostCommit_Python_Examples_Dataflow](https://github.com/apache/beam/actions/workflows/job-postcommit-python-examples-dataflow.yml/badge.svg?branch=master&event=schedule)](https://github.com/apache/beam/actions?query=branch%3Amaster+workflow%3A%22PostCommit_Python_Examples_Dataflow%22+event%3Aschedule)
+| Job                          | Description                                    | Pull Request Run | Direct Push/Merge Run | Scheduled Run | Requires GCP Credentials |
+|------------------------------|------------------------------------------------|------------------|-----------------------|---------------|--------------------------|
+| Run Python Examples Dataflow | Run Python Examples Tests with Dataflow runner | -                | Yes                   | Yes           | -                        |
+
+#### Runs python examples direct - [job-postcommit-python-examples-direct.yml](.github/workflows/job-postcommit-python-examples-direct.yml) [![PostCommit_Python_Examples_Direct](https://github.com/apache/beam/actions/workflows/job-postcommit-python-examples-direct.yml/badge.svg?branch=master&event=schedule)](https://github.com/apache/beam/actions?query=branch%3Amaster+workflow%3A%22PostCommit_Python_Examples_Direct%22+event%3Aschedule)
+| Job                        | Description                                  | Pull Request Run | Direct Push/Merge Run | Scheduled Run | Requires GCP Credentials |
+|----------------------------|----------------------------------------------|------------------|-----------------------|---------------|--------------------------|
+| Run Python Examples Direct | Run Python Examples Tests with Direct runner | -                | Yes                   | Yes           | -                        |
+
+#### Runs python examples flink - [job-postcommit-python-examples-flink.yml](.github/workflows/job-postcommit-python-examples-flink.yml) [![PostCommit_Python_Examples_Flink](https://github.com/apache/beam/actions/workflows/job-postcommit-python-examples-flink.yml/badge.svg?branch=master&event=schedule)](https://github.com/apache/beam/actions?query=branch%3Amaster+workflow%3A%22PostCommit_Python_Examples_Flink%22+event%3Aschedule)
+| Job                       | Description                                 | Pull Request Run | Direct Push/Merge Run | Scheduled Run | Requires GCP Credentials |
+|---------------------------|---------------------------------------------|------------------|-----------------------|---------------|--------------------------|
+| Run Python Examples Flink | Run Python Examples Tests with Flink runner | -                | Yes                   | Yes           | -                        |
+
+#### Runs python examples spark - [job-postcommit-python-examples-spark.yml](.github/workflows/job-postcommit-python-examples-spark.yml) [![PostCommit_Python_Examples_Spark](https://github.com/apache/beam/actions/workflows/job-postcommit-python-examples-spark.yml/badge.svg?branch=master&event=schedule)](https://github.com/apache/beam/actions?query=branch%3Amaster+workflow%3A%22PostCommit_Python_Examples_Spark%22+event%3Aschedule)
+| Job                       | Description                                 | Pull Request Run | Direct Push/Merge Run | Scheduled Run | Requires GCP Credentials |
+|---------------------------|---------------------------------------------|------------------|-----------------------|---------------|--------------------------|
+| Run Python Examples Spark | Run Python Examples Tests with Spark runner | -                | Yes                   | Yes           | -                        |
+
 ### GitHub Action Tips
 
 * If you introduce changes to the workflow it is possible that your changes will not be present in the check run triggered in Pull Request.
