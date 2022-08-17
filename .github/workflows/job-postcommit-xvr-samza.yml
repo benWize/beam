@@ -26,10 +26,10 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: 'v*'
-#  # TODO: Remove before merge
-#  pull_request:
-#    branches: ['master', 'release-*']
-#    tags: 'v*'
+  # TODO: Remove before merge
+  pull_request:
+    branches: ['master', 'release-*']
+    tags: 'v*'
 
 jobs:
   set-properties:
