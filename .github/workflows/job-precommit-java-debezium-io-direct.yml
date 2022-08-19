@@ -20,20 +20,21 @@
 name: Java_Debezium_IO_Direct
 
 on:
-  schedule:
-    - cron: '0 */6 * * *'
-  push:
-    branches: ['master', 'release-*']
-    tags: 'v*'
+#   schedule:
+#     - cron: '0 */6 * * *'
+#   push:
+#     branches: ['master', 'release-*']
+#     tags: 'v*'
   pull_request:
     branches: ['master', 'release-*']
     tags: 'v*'
 #    paths: ['sdks/java/io/debezium/**']
+  workflow_dispatch:
 
 jobs:
   java-debezium-io:
     name: Run Java Debezium IO Direct
-    runs-on: self-hosted
+    runs-on: [self-hosted, dind-test]
     timeout-minutes: 60
     steps:
       - name: Checkout code
