@@ -37,6 +37,14 @@ runs:
       uses: actions/setup-java@v1
       with:
         java-version: 8
+    - name: Set Java Version
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Set Java Version
+      uses: actions/setup-java@v1
+      with:
+        java-version: 17
     - name: Set Go Version
       uses: actions/setup-go@v3
       with:
