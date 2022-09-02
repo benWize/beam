@@ -61,7 +61,7 @@ jobs:
           persist-credentials: false
           submodules: recursive
       - name: Set python version
-        run: echo "PYTHON_VERSION=$(echo py${{ matrix.version }} | sed -e 's/\.//g')" >> $GITHUB_ENV
+        run: echo "PYTHON_VERSION=$(echo ${{ matrix.version }} | sed -e 's/\.//g')" >> $GITHUB_ENV
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
       - name: Run :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cloud
