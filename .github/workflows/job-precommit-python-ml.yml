@@ -29,7 +29,7 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: 'v*'
-    paths: ['sdks/python/apache_beam/ml/**']
+#    paths: ['sdks/python/apache_beam/ml/**']
 
 jobs:
   set-properties:
@@ -53,7 +53,6 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{fromJson(needs.set-properties.outputs.properties).PythonTestProperties.ALL_SUPPORTED_VERSIONS}}
-        tox-env: ${{fromJson(needs.set-properties.outputs.properties).PythonTestProperties.TOX_ENV}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -62,8 +61,15 @@ jobs:
           submodules: recursive
       - name: Set python version
         run: echo "PYTHON_VERSION=$(echo py${{ matrix.version }} | sed -e 's/\.//g')" >> $GITHUB_ENV
-      - name: Run ML tests with ${{ matrix.tox-env }} env
-        uses: ./.github/actions/setup-python-tests-action
+      - name: Setup environment
+        uses: ./.github/actions/setup-self-hosted-action
+      - name: Run :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cloud
+        uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          test-directory: apache_beam/ml/
-          python-version: ${{ env.PYTHON_VERSION }}-${{ matrix.tox-env }}
+          gradle-command: :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cloud
+          arguments: "-Pposargs=apache_beam/ml/"
+      - name: Run :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cython
+        uses: ./.github/actions/gradle-command-self-hosted-action
+        with:
+          gradle-command: :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cython
+          arguments: "-Pposargs=apache_beam/ml/"
