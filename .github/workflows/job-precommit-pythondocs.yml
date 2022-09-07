@@ -28,14 +28,12 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: 'v*'
-#    paths: ['sdks/python/**']
+    paths: ['sdks/python/**']
 
 jobs:
   python-docs:
     name: Run Python Docs
     runs-on: self-hosted
-    strategy:
-      fail-fast: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
