@@ -23,7 +23,7 @@
 
 Beam Jenkins overview page: [link](https://ci-beam.apache.org/)
 
-Some of the Pre Commit and Postcommit Jobs have been migrated to GA actions, for further reference see [CI.md](https://github.com/apache/beam/blob/master/CI.md).
+Some of the PreCommit and PostCommit Jobs have been migrated to GA actions, for further reference see [CI.md](https://github.com/apache/beam/blob/master/CI.md).
 ### PreCommit Jobs
 
 | Name | Link | PR Trigger Phrase | Cron Status |
