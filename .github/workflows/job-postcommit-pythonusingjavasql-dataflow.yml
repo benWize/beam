@@ -28,8 +28,6 @@ on:
     tags: 'v*'
   #  # TODO: Remove before merge
   pull_request:
-    branches: ['master', 'release-*']
-    tags: 'v*'
 
 jobs:
   set-properties:
