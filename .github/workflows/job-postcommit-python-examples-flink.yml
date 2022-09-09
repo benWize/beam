@@ -25,6 +25,7 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: 'v*'
+  pull_request:
 
 jobs:
   python-examples-flink:
@@ -37,6 +38,8 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - name: Setup environment
+        uses: ./.github/actions/setup-self-hosted-action
       - name: Run :sdks:python:test-suites:portable:flinkExamplesPostCommit
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
