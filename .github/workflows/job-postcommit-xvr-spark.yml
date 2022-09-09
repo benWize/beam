@@ -48,9 +48,10 @@ jobs:
     name: Spark XVR
     runs-on: self-hosted
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         version: ${{fromJson(needs.set-properties.outputs.properties).PythonTestProperties.CROSS_LANGUAGE_VALIDATES_RUNNER_PYTHON_VERSIONS}}
+        spark: ${{fromJson(needs.set-properties.outputs.properties).JavaTestProperties.SPARK_VERSIONS}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -59,8 +60,8 @@ jobs:
           submodules: recursive
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
-      - name: Run :runners:spark:2:job-server:validatesCrossLanguageRunner
+      - name: Run :runners:spark:${{ matrix.spark }}:job-server:validatesCrossLanguageRunner
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: :runners:spark:2:job-server:validatesCrossLanguageRunner
+          gradle-command: :runners:spark:${{ matrix.spark }}:job-server:validatesCrossLanguageRunner
           arguments: -PpythonVersion=${{ matrix.version }}

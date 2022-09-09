@@ -48,7 +48,7 @@ jobs:
     name: PythonUsingJavaSQL_Dataflow_XVR
     runs-on: self-hosted
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         version: ${{fromJson(needs.set-properties.outputs.properties).PythonTestProperties.CROSS_LANGUAGE_VALIDATES_RUNNER_PYTHON_VERSIONS}}
     steps:
