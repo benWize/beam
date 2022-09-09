@@ -16,13 +16,16 @@
 package db
 
 import (
-	"beam.apache.org/playground/backend/internal/db/entity"
 	"context"
+
+	pb "beam.apache.org/playground/backend/internal/api/v1"
+	"beam.apache.org/playground/backend/internal/db/entity"
 )
 
 type Database interface {
 	SnippetDatabase
 	CatalogDatabase
+	ExampleDatabase
 }
 
 type SnippetDatabase interface {
@@ -31,6 +34,8 @@ type SnippetDatabase interface {
 	GetSnippet(ctx context.Context, id string) (*entity.SnippetEntity, error)
 
 	GetFiles(ctx context.Context, snipId string, numberOfFiles int) ([]*entity.FileEntity, error)
+
+	DeleteUnusedSnippets(ctx context.Context, dayDiff int32) error
 }
 
 type CatalogDatabase interface {
@@ -38,5 +43,9 @@ type CatalogDatabase interface {
 
 	PutSDKs(ctx context.Context, sdks []*entity.SDKEntity) error
 
-	GetSDK(ctx context.Context, id string) (*entity.SDKEntity, error)
+	GetSDKs(ctx context.Context) ([]*entity.SDKEntity, error)
+}
+
+type ExampleDatabase interface {
+	GetCatalog(ctx context.Context, sdkCatalog []*entity.SDKEntity) ([]*pb.Categories, error)
 }
