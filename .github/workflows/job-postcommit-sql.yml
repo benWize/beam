@@ -26,7 +26,8 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: 'v*'
-
+  pull_request:
+    
 jobs:
   sql:
     name: SQL Tests
