@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This workflow will run Parquet IO Unit Tests in Java SDK with DirectRunner
+# This workflow will run RabbitMQ IO Unit Tests in Java SDK
 
-name: Java_Parquet_IO_Direct
+name: Java RabbitMQ IO
 
 on:
   schedule:
@@ -28,11 +28,11 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: 'v*'
-#    paths: ['sdks/java/io/parquet/**']
+#    paths: ['sdks/java/io/rabbitmq/**']
 
 jobs:
-  java-parquet-io:
-    name: Run Java Parquet IO Direct
+  java-rabbitmq-io:
+    name: Run Java RabbitMQ IO
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
@@ -43,7 +43,7 @@ jobs:
           submodules: recursive
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
-      - name: Run :sdks:java:io:parquet:test
+      - name: Run :sdks:java:io:rabbitmq:test
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: :sdks:java:io:parquet:test
+          gradle-command: :sdks:java:io:rabbitmq:test

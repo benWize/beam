@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This workflow will run MQTT IO Unit Tests in Java SDK with DirectRunner
+# This workflow will run MQTT IO Unit Tests in Java SDK
 
-name: Java_MQTT_IO_Direct
+name: Java MQTT IO
 
 on:
   schedule:
@@ -32,7 +32,7 @@ on:
 
 jobs:
   java-mqtt-io:
-    name: Run Java MQTT IO Direct
+    name: Run Java MQTT IO
     runs-on: self-hosted
     timeout-minutes: 60
     steps:

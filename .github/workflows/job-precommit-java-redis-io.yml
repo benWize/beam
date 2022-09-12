@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This workflow will run Pulsar IO Unit Tests in Java SDK with DirectRunner
+# This workflow will run Redis IO Unit Tests in Java SDK
 
-name: Java_Pulsar_IO_Direct
+name: Java Redis IO
 
 on:
   schedule:
@@ -28,11 +28,11 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: 'v*'
-#    paths: ['sdks/java/io/pulsar/**']
+#    paths: ['sdks/java/io/redis/**']
 
 jobs:
-  java-pulsar-io:
-    name: Run Java Pulsar IO Direct
+  java-redis-io:
+    name: Run Java Redis IO
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
@@ -43,7 +43,7 @@ jobs:
           submodules: recursive
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
-      - name: Run :sdks:java:io:pulsar:test
+      - name: Run :sdks:java:io:redis:test
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: :sdks:java:io:pulsar:test
+          gradle-command: :sdks:java:io:redis:test
