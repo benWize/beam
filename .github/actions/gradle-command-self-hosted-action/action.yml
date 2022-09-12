@@ -43,4 +43,3 @@ runs:
       run: |
         ./gradlew ${{ inputs.gradle-command }} --max-workers=${{ inputs.max-workers }} ${{ inputs.arguments }} \
         ${{ inputs.default-arguments }}
-        
