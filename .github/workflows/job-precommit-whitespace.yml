@@ -22,10 +22,10 @@ name: PreCommit Whitespace
 on:
   workflow_dispatch:
   push:
-    branches: ['main', 'release-*']
+    branches: ['master', 'release-*']
     tags: 'v*'
   pull_request:
-    branches: ['main', 'release-*']
+    branches: ['master', 'release-*']
     tags: 'v*'
 #    paths: ['.*\\.md$', '.*build\\.gradle$']
 
