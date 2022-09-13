@@ -17,10 +17,9 @@
 
 # This workflow will run the test of python GCP IO classes.
 
-name: Python_GCP_IO
+name: Python GCP IO
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:

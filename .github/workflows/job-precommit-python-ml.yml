@@ -17,10 +17,9 @@
 
 # This workflow will run the test of python ML classes.
 
-name: Python_ML
+name: Python ML
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:

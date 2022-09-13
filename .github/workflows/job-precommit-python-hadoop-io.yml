@@ -17,10 +17,9 @@
 
 # This workflow will run the test of python Hadoop IO class.
 
-name: Python_Hadoop_IO
+name: Python Hadoop IO
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:

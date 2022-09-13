@@ -17,10 +17,9 @@
 
 # This workflow will run the test of python Avro IO class.
 
-name: Python_Avro_IO
+name: Python Avro IO
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:

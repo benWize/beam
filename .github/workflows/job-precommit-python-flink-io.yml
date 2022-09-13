@@ -17,10 +17,9 @@
 
 # This workflow will run the test of python Flink IO class.
 
-name: Python_Flink_IO
+name: Python Flink IO
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:
