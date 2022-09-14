@@ -58,7 +58,7 @@ runs:
       with:
         python-version: "3.9"
     - name: Set Java Version
-      if: ${{ inputs.requires-py-java-8 == 'true'  }}
+      if: ${{ inputs.requires-java-8 == 'true'  }}
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
@@ -69,7 +69,7 @@ runs:
       with:
         go-version: '1.18.0'
     - name: Remove default github maven configuration
-      if: ${{ inputs.requires-py-java-8 == 'true'  }}
+      if: ${{ inputs.requires-java-8 == 'true'  }}
       # This step is a workaround to avoid a decryption issue of Beam's
       # gradle-command-action plugin and github's provided maven
       # settings.xml file
