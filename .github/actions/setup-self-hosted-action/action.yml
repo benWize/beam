@@ -69,6 +69,7 @@ runs:
       with:
         go-version: '1.18.0'
     - name: Remove default github maven configuration
+      if: ${{ inputs.requires-py-java-8 }}
       # This step is a workaround to avoid a decryption issue of Beam's
       # gradle-command-action plugin and github's provided maven
       # settings.xml file
