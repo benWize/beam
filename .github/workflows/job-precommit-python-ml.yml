@@ -24,11 +24,12 @@ on:
     - cron: '0 */6 * * *'
   push:
     branches: ['master', 'release-*']
-    tags: 'v*'
-  pull_request:
+    tags: ['v*']
+  pull_request_target:
     branches: ['master', 'release-*']
-    tags: 'v*'
+    tags: ['v*']
 #    paths: ['sdks/python/apache_beam/ml/**']
+permissions: read-all
 
 jobs:
   set-properties:
@@ -37,8 +38,9 @@ jobs:
       properties: ${{ steps.test-properties.outputs.properties }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
           submodules: recursive
       - id: test-properties
@@ -49,26 +51,26 @@ jobs:
     name: Python ML
     runs-on: self-hosted
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         version: ${{fromJson(needs.set-properties.outputs.properties).PythonTestProperties.ALL_SUPPORTED_VERSIONS}}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
           submodules: recursive
       - name: Set python version
         run: echo "PYTHON_VERSION=$(echo ${{ matrix.version }} | sed -e 's/\.//g')" >> $GITHUB_ENV
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
-      - name: Run :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cloud
+        with:
+          requires-java-8: false
+          requires-go-18: false
+      - name: Run Tox Tests
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cloud
-          arguments: "-Pposargs=apache_beam/ml/"
-      - name: Run :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cython
-        uses: ./.github/actions/gradle-command-self-hosted-action
-        with:
-          gradle-command: :sdks:python:test-suites:tox:py${{ env.PYTHON_VERSION }}:testPy${{ env.PYTHON_VERSION }}Cython
+          gradle-command: |
+          :sdks:python:test-suites:tox:py${{env.PYTHON_VERSION}}:testPy${{env.PYTHON_VERSION}}${{matrix.tox-env}}
           arguments: "-Pposargs=apache_beam/ml/"
