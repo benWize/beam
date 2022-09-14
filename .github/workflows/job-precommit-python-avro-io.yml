@@ -70,6 +70,5 @@ jobs:
       - name: Run Tox Tests
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: |
-          :sdks:python:test-suites:tox:py${{env.PYTHON_VERSION}}:testPy${{env.PYTHON_VERSION}}${{matrix.tox-env}}
+          gradle-command: :sdks:python:test-suites:tox:py${{env.PYTHON_VERSION}}:testPy${{env.PYTHON_VERSION}}${{matrix.tox-env}}
           arguments: "-Pposargs=apache_beam/io/avroio_test.py"
