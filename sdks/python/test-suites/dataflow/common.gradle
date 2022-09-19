@@ -110,7 +110,7 @@ task postCommitITByTestDirectory {
   def dataflowWorkerJar = project(":runners:google-cloud-dataflow-java:worker").shadowJar.archivePath
 
   doLast {
-    def testOpts = basicPytestOpts + ["--numprocesses=8", "--dist=loadfile", "--collect-only"]
+    def testOpts = basicPytestOpts + ["--numprocesses=8", "--dist=loadfile"]
     def argMap = [
             "test_opts": testOpts + [testDir],
             "sdk_location": files(configurations.distTarBall.files).singleFile,
