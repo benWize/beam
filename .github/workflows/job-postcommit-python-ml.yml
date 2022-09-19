@@ -25,7 +25,7 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: ['v*']
-  pull_request:
+#  pull_request:
 permissions: read-all
 
 jobs:
