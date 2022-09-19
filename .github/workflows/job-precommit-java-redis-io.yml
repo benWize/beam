@@ -28,7 +28,7 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-    paths: ['sdks/java/io/redis/**']
+#    paths: ['sdks/java/io/redis/**']
 permissions: read-all
 
 jobs:

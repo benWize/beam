@@ -28,7 +28,7 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-    paths: ['sdks/java/io/parquet/**']
+#    paths: ['sdks/java/io/parquet/**']
 permissions: read-all
 
 jobs:

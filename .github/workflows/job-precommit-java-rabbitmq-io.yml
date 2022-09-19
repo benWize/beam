@@ -28,7 +28,7 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-    paths: ['sdks/java/io/rabbitmq/**']
+#    paths: ['sdks/java/io/rabbitmq/**']
 permissions: read-all
 
 jobs:
