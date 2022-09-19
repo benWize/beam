@@ -42,9 +42,9 @@ jobs:
       - id: test-properties
         uses: ./.github/actions/setup-default-test-properties
 
-  python_avro_io:
+  python_ml:
     needs: set-properties
-    name: Python Avro IO
+    name: Python ML
     runs-on: self-hosted
     strategy:
       fail-fast: true
@@ -60,6 +60,8 @@ jobs:
         run: echo "PYTHON_VERSION=$(echo ${{ matrix.version }} | sed -e 's/\.//g')" >> $GITHUB_ENV
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
+        with:
+          requires-go-18: false
       - name: Run :sdks:python:test-suites:dataflow:py${{env.PYTHON_VERSION}}:postCommitITByTestDirectory
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
