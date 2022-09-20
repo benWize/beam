@@ -25,11 +25,11 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: ['v*']
-  pull_request_target:
+  pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-    paths: ['sdks/python/apache_beam/io/hadoopfilesystem.py',
-      'sdks/python/apache_beam/io/hadoopfilesystem_test.py']
+#    paths: ['sdks/python/apache_beam/io/hadoopfilesystem.py',
+#      'sdks/python/apache_beam/io/hadoopfilesystem_test.py']
 permissions: read-all
 
 jobs:

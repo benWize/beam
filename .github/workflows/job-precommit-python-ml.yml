@@ -25,10 +25,10 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: ['v*']
-  pull_request_target:
+  pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-    paths: ['sdks/python/apache_beam/ml/**']
+#    paths: ['sdks/python/apache_beam/ml/**']
 permissions: read-all
 
 jobs:
