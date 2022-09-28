@@ -74,9 +74,6 @@ task createDockerContainer(type: Exec) {
       extraOptions = "--publish 127.0.0.1:1313:1313"
     }
 
-    // Add service account from host
-    extraOptions += " -e SERVICE_ACCOUNT"
-
     if (System.getenv().getOrDefault('NODE_NAME', '').startsWith('websites')) {
       // Jenkins websites node: run as root. Files written to /repo will get
       // "jenkins" user ownership. BEAM-9737
@@ -123,23 +120,6 @@ task cloneRepository(type: Exec) {
           "${->startDockerContainer.containerId()}", "git", "clone", "-b", System.getenv('ghBranch'),
           "https://github.com/${System.getenv('repositoryUrl')}", "."
 }
-//
-//task activateServiceAccount {
-//  doFirst {
-//    exec {
-//      commandLine 'docker', 'exec',
-//              "${->startDockerContainer.containerId()}", '/bin/bash', '-c',
-//              """echo \$SERVICE_ACCOUNT > /tmp/gcp_access.json"""
-//    }
-//  }
-//  doLast {
-//    exec {
-//      commandLine 'docker', 'exec',
-//              "${->startDockerContainer.containerId()}", '/bin/bash', '-c',
-//              """gcloud auth activate-service-account --project=apache-beam-testing --key-file=/tmp/gcp_access.json"""
-//    }
-//  }
-//}
 
 task setupVirtualenvWithDependenciesInDocker {
   doLast {
