@@ -26,10 +26,10 @@ on:
   push:
     branches: ['master', 'release-*']
     tags: 'v*'
-  pull_request_target:
+  pull_request:
     branches: ['master', 'release-*']
     tags: 'v*'
-    paths: ['website/**']
+#    paths: ['website/**']
 permissions: read-all
 
 jobs:
