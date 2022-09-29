@@ -133,9 +133,14 @@ Service Account shall have following permissions ([IAM roles](https://cloud.goog
 | PreCommit   | Yes              | Yes                   | Yes           | Yes               |
 
 ### PreCommit Workflows
-| Workflow                                                                         | Description             | Requires GCP Credentials  |
-|----------------------------------------------------------------------------------|-------------------------|---------------------------|
-| [job-precommit-placeholder.yml](.github/workflows/job-precommit-placeholder.yml) | Description placeholder | Yes/No                    |
+| Workflow                                                                                   | Description                      | Requires GCP Credentials |
+|--------------------------------------------------------------------------------------------|----------------------------------|--------------------------|
+| [job-precommit-python-avro-io.yml](.github/workflows/job-precommit-python-avro-io.yml)     | Runs Python Avro IO Unit Tests   | No                       |
+| [job-precommit-python-azure-io.yml](.github/workflows/job-precommit-python-azure-io.yml)   | Runs Python Azure IO Unit Tests  | No                       |
+| [job-precommit-python-flink-io.yml](.github/workflows/job-precommit-python-flink-io.yml)   | Runs Python Flink IO Unit Tests  | No                       |
+| [job-precommit-python-gcp-io.yml](.github/workflows/job-precommit-python-gcp-io.yml)       | Runs Python GCP IO Unit Tests    | No                       |
+| [job-precommit-python-hadoop-io.yml](.github/workflows/job-precommit-python-hadoop-io.yml) | Runs Python Hadoop IO Unit Tests | No                       |
+| [job-precommit-python-ml.yml](.github/workflows/job-precommit-python-ml.yml)               | Runs Python ML Unit Tests        | No                       |
 
 ### PostCommit Workflows
 | Workflow                                                                           | Description             | Requires GCP Credentials |
