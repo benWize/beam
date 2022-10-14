@@ -138,9 +138,9 @@ Service Account shall have following permissions ([IAM roles](https://cloud.goog
 | [job-precommit-placeholder.yml](.github/workflows/job-precommit-placeholder.yml) | Description placeholder | Yes/No                    |
 
 ### PostCommit Workflows
-| Workflow                                                                           | Description             | Requires GCP Credentials |
-|------------------------------------------------------------------------------------|-------------------------|--------------------------|
-| [job-postcommit-placeholder.yml](.github/workflows/job-postcommit-placeholder.yml) | Description placeholder | Yes/No                   |
+| Workflow                                                                       | Description                             | Requires GCP Credentials |
+|--------------------------------------------------------------------------------|-----------------------------------------|--------------------------|
+| [job-postcommit-python-ml.yml](.github/workflows/job-postcommit-python-ml.yml) | Runs Python Python ML Integration Tests | Yes                      |
 
 ### GitHub Action Tips
 
