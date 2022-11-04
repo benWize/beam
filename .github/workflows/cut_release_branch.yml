@@ -33,7 +33,8 @@ on:
 
 jobs:
   update_master:
-    runs-on: [self-hosted, ubuntu-20.04]
+#    TODO: Replace to use self-hosted runners
+    runs-on: ubuntu-latest
     env:
       MASTER_BRANCH: master
       NEXT_RELEASE: ${{ github.event.inputs.NEXT_VERSION }}
@@ -66,11 +67,11 @@ jobs:
           git add sdks/python/apache_beam/version.py
           git add sdks/go/pkg/beam/core/core.go
           git commit -m "Moving to ${NEXT_VERSION_IN_BASE_BRANCH}-SNAPSHOT on master branch."
-#          TODO: Remove dry-run before merge
           git push --dry-run origin ${MASTER_BRANCH}
 
   update_release_branch:
-    runs-on: [ self-hosted, ubuntu-20.04 ]
+#    TODO: Replace to use self-hosted runners
+    runs-on: ubuntu-latest
     env:
       RELEASE: ${{ github.event.inputs.RELEASE_VERSION }}
       RELEASE_BRANCH: release-${RELEASE}
@@ -106,7 +107,6 @@ jobs:
         run: |
           git add runners/google-cloud-dataflow-java/build.gradle
           git commit -m "Set Dataflow container to release version."
-#           TODO: Remove dry-run before merge
           git push --dry-run --set-upstream origin ${RELEASE_BRANCH}
 
 
