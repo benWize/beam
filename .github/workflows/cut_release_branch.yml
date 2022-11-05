@@ -60,7 +60,7 @@ jobs:
           git config user.email actions@"$RUNNER_NAME".local
       - name: Update master branch
         run: |
-          sh ./set_version.sh "$NEXT_VERSION_IN_BASE_BRANCH"
+          sh ./set_version.sh "${NEXT_VERSION_IN_BASE_BRANCH}"
           echo "==============Update master branch as following================"
           git diff
           echo "==============================================================="
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE: ${{ github.event.inputs.RELEASE_VERSION }}
-      RELEASE_BRANCH: release-${env.RELEASE}
+      RELEASE_BRANCH: release-${{env.RELEASE}}
     steps:
       - name: Validate Release Version
         run: |
