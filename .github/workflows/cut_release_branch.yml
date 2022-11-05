@@ -38,6 +38,7 @@ jobs:
     env:
       MASTER_BRANCH: master
       NEXT_RELEASE: ${{ github.event.inputs.NEXT_VERSION }}
+      SCRIPT_DIR: ./release/src/main/scripts
     steps:
       - name: Validate Next Version
         run: |
@@ -60,11 +61,10 @@ jobs:
           git config user.email actions@"$RUNNER_NAME".local
       - name: Update master branch
         run: |
-          bash ./set_version.sh "${NEXT_VERSION_IN_BASE_BRANCH}"
+          bash "${SCRIPT_DIR}/set_version.sh" "${NEXT_VERSION_IN_BASE_BRANCH}"
           echo "==============Update master branch as following================"
           git diff
           echo "==============================================================="
-        working-directory: 'release/src/main/scripts'
       - name: Commit and Push to master branch files with Next Version
         run: |
           git add buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
