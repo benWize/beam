@@ -21,28 +21,15 @@
 # To learn more about GitHub Actions in Apache Beam check the CI.md
 
 name: Cut Release Branch
-# TODO: Remove, only for testing
-inputs:
-  RELEASE_VERSION:
-    description: Beam version of current release
-    required: true
-    default: 2.44.0
-  NEXT_VERSION:
-    description: Next release version
-    required: true
-    default: 2.45.0
 on:
-  # TODO: Remove, only for testing
-  pull_request:
-  # TODO: Uncomment, only for testing
-#  workflow_dispatch:
-#    inputs:
-#      RELEASE_VERSION:
-#        description: Beam version of current release
-#        required: true
-#      NEXT_VERSION:
-#        description: Next release version
-#        required: true
+  workflow_dispatch:
+    inputs:
+      RELEASE_VERSION:
+        description: Beam version of current release
+        required: true
+      NEXT_VERSION:
+        description: Next release version
+        required: true
 
 jobs:
   update_master:
