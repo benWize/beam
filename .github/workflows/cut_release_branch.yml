@@ -60,7 +60,7 @@ jobs:
           git config user.email actions@"$RUNNER_NAME".local
       - name: Update master branch
         run: |
-          sh ./set_version.sh "${NEXT_VERSION_IN_BASE_BRANCH}"
+          bash ./set_version.sh "${NEXT_VERSION_IN_BASE_BRANCH}"
           echo "==============Update master branch as following================"
           git diff
           echo "==============================================================="
