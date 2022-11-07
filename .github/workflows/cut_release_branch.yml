@@ -71,7 +71,7 @@ jobs:
           git add sdks/python/apache_beam/version.py
           git add sdks/go/pkg/beam/core/core.go
           git commit -m "Moving to ${NEXT_VERSION_IN_BASE_BRANCH}-SNAPSHOT on master branch."
-          git push --dry-run origin ${MASTER_BRANCH}
+          git push origin ${MASTER_BRANCH}
 
   update_release_branch:
     runs-on: [self-hosted, ubuntu-20.04]
@@ -115,7 +115,7 @@ jobs:
         run: |
           git add runners/google-cloud-dataflow-java/build.gradle
           git commit -m "Set Dataflow container to release version."
-          git push --dry-run --set-upstream origin ${RELEASE_BRANCH}
+          git push --set-upstream origin ${RELEASE_BRANCH}
 
 
 
