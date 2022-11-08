@@ -49,9 +49,9 @@ on:
 jobs:
   choose_rc_commit:
     runs-on: [self-hosted, ubuntu-20.04]
-      env:
-        RC_TAG: v${{ github.event.inputs.RELEASE }}-RC${{ github.event.inputs.RC }}
-        SCRIPT_DIR: ./release/src/main/scripts
+    env:
+      RC_TAG: v${{ github.event.inputs.RELEASE }}-RC${{ github.event.inputs.RC }}
+      SCRIPT_DIR: ./release/src/main/scripts
     steps:
       - name: Echo value
         run: |
@@ -59,7 +59,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
         with:
-          - ref: release-$RELEASE
+          ref: release-$RELEASE
       - name: Set git config
         run: |
           git config user.name $GITHUB_ACTOR
