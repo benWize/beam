@@ -59,7 +59,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
         with:
-          ref: release-$RELEASE
+          ref: release-${{ github.event.inputs.RELEASE }}
       - name: Set git config
         run: |
           git config user.name $GITHUB_ACTOR
