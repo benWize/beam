@@ -66,9 +66,9 @@ jobs:
           git config user.email actions@"$RUNNER_NAME".local
       - name: Set version and commit
         run: |
-          bash "${SCRIPT_DIR}/set_version.sh" "${RELEASE}" --release --git-add $DEBUG
+          bash "${SCRIPT_DIR}/set_version.sh" "${{ github.event.inputs.RELEASE }}" --release --git-add $DEBUG
           git checkout --quiet "$COMMIT" # suppress warning about detached HEAD: we want it detached so we do not edit the branch
-          git commit -m "Set version for ${RELEASE} RC${RC}"
+          git commit -m "Set version for ${{ github.event.inputs.RELEASE }} RC${RC}"
       - name: Overwrite tag
         #        TODO: Remove dry-run
         run: |
