@@ -89,7 +89,7 @@ jobs:
       - name: Primary tag for the repo
         run: git tag -a -m "$RC_TAG" "$RC_TAG" HEAD
       - name: Push tag
-        if: ${{github.event.inputs.RELEASE == 'yes'}}
+        if: ${{github.event.inputs.PUSH_TAG == 'yes'}}
 #        TODO: Remove dry-run
         run: |
           git push --dry-run --follow-tags origin "sdks/$RC_TAG"
