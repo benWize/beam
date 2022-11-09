@@ -75,7 +75,7 @@ jobs:
         run: |
           if git rev-parse "$RC_TAG" >/dev/null 2>&1; then
             if [[ "${{ github.event.inputs.OVERWRITE }}" == yes ]]; then
-              git push --dry-run origin ":refs/tags/$RC_TAG"
+              git push origin ":refs/tags/$RC_TAG"
             else
               echo "Tag $RC_TAG already exists. Either delete it manually or run with --overwrite. Do not overwrite if an RC has been built and shared!"
               exit 1
@@ -92,6 +92,6 @@ jobs:
         if: ${{github.event.inputs.PUSH_TAG == 'yes'}}
 #        TODO: Remove dry-run
         run: |
-          git push --dry-run --follow-tags origin "sdks/$RC_TAG"
-          git push --dry-run --follow-tags origin "$RC_TAG"
+          git push --follow-tags origin "sdks/$RC_TAG"
+          git push --follow-tags origin "$RC_TAG"
 
