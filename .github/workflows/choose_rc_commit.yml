@@ -71,11 +71,10 @@ jobs:
           git checkout --quiet ${{ github.event.inputs.COMMIT }} # suppress warning about detached HEAD: we want it detached so we do not edit the branch
           git commit -m "Set version for ${{ github.event.inputs.RELEASE }} RC${{ github.event.inputs.RC }}"
       - name: Overwrite tag
-        #        TODO: Remove dry-run
         run: |
           if git rev-parse "$RC_TAG" >/dev/null 2>&1; then
             if [[ "${{ github.event.inputs.OVERWRITE }}" == yes ]]; then
-              git push --dry-run origin ":refs/tags/$RC_TAG"
+              git push origin ":refs/tags/$RC_TAG"
             else
               echo "Tag $RC_TAG already exists. Either delete it manually or run with --overwrite. Do not overwrite if an RC has been built and shared!"
               exit 1
@@ -90,8 +89,7 @@ jobs:
         run: git tag -a -m "$RC_TAG" "$RC_TAG" HEAD
       - name: Push tag
         if: ${{github.event.inputs.PUSH_TAG == 'yes'}}
-#        TODO: Remove dry-run
         run: |
-          git push --dry-run --follow-tags origin "sdks/$RC_TAG"
-          git push --dry-run --follow-tags origin "$RC_TAG"
+          git push --follow-tags origin "sdks/$RC_TAG"
+          git push --follow-tags origin "$RC_TAG"
 
