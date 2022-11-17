@@ -31,9 +31,6 @@ on:
       RC_NUMBER:
         description: RC version for the release
         required: true
-      COMMIT:
-        description: Selected commit to create the release
-        required: true
 #      USER_GITHUB_ID:
 #        description:
 #        required: true
@@ -94,23 +91,23 @@ jobs:
         run: |
           echo python3 "${SCRIPT_DIR}/download_github_actions_artifacts.py" \
           --github-user "${GITHUB_ACTOR}" \
-          --repo-url "${GIT_REPO_BASE_URL}" \
+          --repo-url "${{ github.event.inputs.GIT_REPO_BASE_URL }}" \
           --rc-tag "${RC_TAG}" \
           --release-commit "${RELEASE_COMMIT}" \
           --artifacts_dir "${PYTHON_ARTIFACTS_DIR}" \
-          --rc_number "${RC_NUMBER}"
+          --rc_number "${{ github.event.inputs.RC_NUMBER }}"
           python3 "${SCRIPT_DIR}/download_github_actions_artifacts.py" \
           --github-user "${GITHUB_ACTOR}" \
-          --repo-url "${GIT_REPO_BASE_URL}" \
+          --repo-url "${{ github.event.inputs.GIT_REPO_BASE_URL }}" \
           --rc-tag "${RC_TAG}" \
           --release-commit "${RELEASE_COMMIT}" \
           --artifacts_dir "${PYTHON_ARTIFACTS_DIR}" \
-          --rc_number "${RC_NUMBER}"
+          --rc_number "${{ github.event.inputs.RC_NUMBER }}"
       - name: Check Hash Values
         working-directory: ${{env.PYTHON_ARTIFACTS_DIR}}
         run: |
-          echo "------Checking Hash Value for apache-beam-${RELEASE}rc${RC_NUMBER}.zip-----"
-          sha512sum -c "apache-beam-${RELEASE}rc${RC_NUMBER}.zip.sha512"
+          echo "------Checking Hash Value for apache-beam-${RELEASE}rc$${{ github.event.inputs.RC_NUMBER }}".zip-----"
+          sha512sum -c "apache-beam-${RELEASE}rc${{ github.event.inputs.RC_NUMBER }}".zip.sha512"
 
           for artifact in *.whl; do
             echo "----------Checking Hash Value for ${artifact} wheel-----------"
@@ -128,15 +125,8 @@ jobs:
           echo "Will upload the following files to PyPI:"
           ls
 
-          if [[ "$DEPLOY" == yes ]] ; then
+          if [[ "${{ github.event.inputs.DEPLOY }}" == yes ]] ; then
             twine upload *
           else
             echo "Skipping deployment to PyPI. Run the script with DEPLOY:yes to stage the artifacts."
           fi
-      - name: Primary tag for the repo
-        run: git tag -a -m "$RC_TAG" "$RC_TAG" HEAD
-      - name: Push tag
-        if: ${{github.event.inputs.PUSH_TAG == 'yes'}}
-        run: |
-          git push --follow-tags origin "sdks/$RC_TAG"
-          git push --follow-tags origin "$RC_TAG"
