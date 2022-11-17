@@ -58,15 +58,13 @@ jobs:
     runs-on: [self-hosted, ubuntu-20.04]
     env:
       RC_TAG: v${{ github.event.inputs.RELEASE }}-RC${{ github.event.inputs.RC_NUMBER }}
-      LOCAL_CLONE_DIR: beam_release_${{env.RC_TAG}}
       SCRIPT_DIR: ./scripts/ci/release
       GIT_REPO_URL: https://github.com/${{ github.event.inputs.GIT_REPO_BASE_URL }}
       GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Echo vars
         run: |
-          echo "RC_TAG: ${RC_TAG}, LOCAL_CLONE_DIR: ${LOCAL_CLONE_DIR}, SCRIPT_DIR: ${SCRIPT_DIR} \
-          GIT_REPO_URL= ${GIT_REPO_URL}"
+          echo "RC_TAG: ${RC_TAG}, SCRIPT_DIR: ${SCRIPT_DIR}, GIT_REPO_URL= ${GIT_REPO_URL}"
       - name: Check out code
         uses: actions/checkout@v3
         with:
