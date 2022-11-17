@@ -68,9 +68,9 @@ jobs:
           echo "RC_TAG: ${RC_TAG}, LOCAL_CLONE_DIR: ${LOCAL_CLONE_DIR}, SCRIPT_DIR: ${SCRIPT_DIR} \
           GIT_REPO_URL= ${GIT_REPO_URL}"
       - name: Check out code
-          uses: actions/checkout@v3
-          with:
-            ref: ${{ env.RC_TAG }}
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.RC_TAG }}
       - name: Set git config
         run: |
           git config user.name $GITHUB_ACTOR
