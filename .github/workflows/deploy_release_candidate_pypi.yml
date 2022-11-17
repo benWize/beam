@@ -1,0 +1,142 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# This workflow will deploy a Release Candidate to pypi, includes:
+## 1. Download python binary artifacts
+## 2. Deploy Release Candidate to pypi
+
+# To learn more about GitHub Actions in Apache Beam check the CI.md
+
+name: Deploy Release Candidate
+on:
+  workflow_dispatch:
+    inputs:
+      RELEASE:
+        description: Beam version of current release
+        required: true
+      RC_NUMBER:
+        description: RC version for the release
+        required: true
+      COMMIT:
+        description: Selected commit to create the release
+        required: true
+#      USER_GITHUB_ID:
+#        description:
+#        required: true
+#        default: no
+      DEPLOY:
+        description: Deploy to pypi (yes/no)
+        required: false
+        default: no
+#      BEAM_ROOT_DIR:
+#        description: Root directory
+#        required: false
+#        default: beam
+      GIT_REPO_BASE_URL:
+        description: "Base url (default: apache/beam)"
+        required: false
+        default: apache/beam
+permissions:
+  actions: read
+
+jobs:
+  choose_rc_commit:
+    runs-on: [self-hosted, ubuntu-20.04]
+    env:
+      RC_TAG: v${{ github.event.inputs.RELEASE }}-RC${{ github.event.inputs.RC_NUMBER }}
+      LOCAL_CLONE_DIR: beam_release_${{env.RC_TAG}}
+      SCRIPT_DIR: ./scripts/ci/release
+      GIT_REPO_URL: https://github.com/${{ github.event.inputs.GIT_REPO_BASE_URL }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Echo vars
+        run: |
+          echo "RC_TAG: ${RC_TAG}, LOCAL_CLONE_DIR: ${LOCAL_CLONE_DIR}, SCRIPT_DIR: ${SCRIPT_DIR} \
+          GIT_REPO_URL= ${GIT_REPO_URL}"
+      - name: Check out code
+          uses: actions/checkout@v3
+          with:
+            ref: ${{ env.RC_TAG }}
+      - name: Set git config
+        run: |
+          git config user.name $GITHUB_ACTOR
+          git config user.email actions@"$RUNNER_NAME".local
+      - name: Setting env vars
+        run: |
+          echo "================Checking Environment Variables=============="
+          echo "will download artifacts for ${RC_TAG} built by github actions"
+          echo "LOCAL_CLONE_DIR_ROOT=$(pwd)" >> $GITHUB_ENV
+          echo "PYTHON_ARTIFACTS_DIR=${LOCAL_CLONE_DIR_ROOT}/python" >> $GITHUB_ENV
+          echo "RELEASE_COMMIT=$(git rev-list -n 1 $RC_TAG)" >> $GITHUB_ENV
+          echo "LOCAL_CLONE_DIR_ROOT=${LOCAL_CLONE_DIR_ROOT}, PYTHON_ARTIFACTS_DIR=${PYTHON_ARTIFACTS_DIR} \
+            RELEASE_COMMIT=${RELEASE_COMMIT}"
+      - name: Install python
+        uses: actions/setup-python@v4
+      - name: Install python dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install requests python-dateutil
+      - name: Download python artifacts
+        run: |
+          echo python3 "${SCRIPT_DIR}/download_github_actions_artifacts.py" \
+          --github-user "${GITHUB_ACTOR}" \
+          --repo-url "${GIT_REPO_BASE_URL}" \
+          --rc-tag "${RC_TAG}" \
+          --release-commit "${RELEASE_COMMIT}" \
+          --artifacts_dir "${PYTHON_ARTIFACTS_DIR}" \
+          --rc_number "${RC_NUMBER}"
+          python3 "${SCRIPT_DIR}/download_github_actions_artifacts.py" \
+          --github-user "${GITHUB_ACTOR}" \
+          --repo-url "${GIT_REPO_BASE_URL}" \
+          --rc-tag "${RC_TAG}" \
+          --release-commit "${RELEASE_COMMIT}" \
+          --artifacts_dir "${PYTHON_ARTIFACTS_DIR}" \
+          --rc_number "${RC_NUMBER}"
+      - name: Check Hash Values
+        working-directory: ${{env.PYTHON_ARTIFACTS_DIR}}
+        run: |
+          echo "------Checking Hash Value for apache-beam-${RELEASE}rc${RC_NUMBER}.zip-----"
+          sha512sum -c "apache-beam-${RELEASE}rc${RC_NUMBER}.zip.sha512"
+
+          for artifact in *.whl; do
+            echo "----------Checking Hash Value for ${artifact} wheel-----------"
+            sha512sum -c "${artifact}.sha512"
+          done
+
+          echo "===================Removing sha512 files======================="
+          rm $(ls | grep -i ".*.sha512$")
+      - name: Upload rc to pypi
+        run: |
+          echo "====================Upload rc to pypi========================"
+          pip install twine
+
+          mkdir dist && mv $(ls | grep apache) dist && cd dist
+          echo "Will upload the following files to PyPI:"
+          ls
+
+          if [[ "$DEPLOY" == yes ]] ; then
+            twine upload *
+          else
+            echo "Skipping deployment to PyPI. Run the script with DEPLOY:yes to stage the artifacts."
+          fi
+      - name: Primary tag for the repo
+        run: git tag -a -m "$RC_TAG" "$RC_TAG" HEAD
+      - name: Push tag
+        if: ${{github.event.inputs.PUSH_TAG == 'yes'}}
+        run: |
+          git push --follow-tags origin "sdks/$RC_TAG"
+          git push --follow-tags origin "$RC_TAG"
