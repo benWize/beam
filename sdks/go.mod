@@ -23,16 +23,16 @@ module github.com/apache/beam/sdks/v2
 go 1.18
 
 require (
-	cloud.google.com/go/bigquery v1.43.0
+	cloud.google.com/go/bigquery v1.42.0
 	cloud.google.com/go/datastore v1.9.0
 	cloud.google.com/go/profiler v0.3.0
 	cloud.google.com/go/pubsub v1.26.0
 	cloud.google.com/go/storage v1.28.0
 	github.com/aws/aws-sdk-go-v2 v1.17.1
-	github.com/aws/aws-sdk-go-v2/config v1.18.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.0
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.3.2
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.2
+	github.com/aws/aws-sdk-go-v2/config v1.18.1
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.1
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.39
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.3
 	github.com/aws/smithy-go v1.13.4
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
@@ -61,7 +61,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require cloud.google.com/go/bigtable v1.18.0
+require (
+	cloud.google.com/go/bigtable v1.18.0
+	github.com/tetratelabs/wazero v1.0.0-pre.3
+)
 
 require (
 	cloud.google.com/go v0.105.0 // indirect
@@ -87,7 +90,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.19 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.17.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.17.3 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
