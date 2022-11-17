@@ -54,7 +54,7 @@ permissions:
   actions: read
 
 jobs:
-  choose_rc_commit:
+  deploy_release_candidate:
     runs-on: [self-hosted, ubuntu-20.04]
     env:
       RC_TAG: v${{ github.event.inputs.RELEASE }}-RC${{ github.event.inputs.RC_NUMBER }}
@@ -84,6 +84,8 @@ jobs:
             RELEASE_COMMIT=${RELEASE_COMMIT}"
       - name: Install python
         uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Install python dependencies
         run: |
           pip install --upgrade pip setuptools wheel
