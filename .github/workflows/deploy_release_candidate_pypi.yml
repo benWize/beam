@@ -39,10 +39,6 @@ on:
         description: Deploy to pypi (yes/no)
         required: false
         default: no
-#      BEAM_ROOT_DIR:
-#        description: Root directory
-#        required: false
-#        default: beam
       GIT_REPO_BASE_URL:
         description: "Base url (default: apache/beam)"
         required: false
@@ -54,6 +50,7 @@ jobs:
   deploy_release_candidate:
     runs-on: [self-hosted, ubuntu-20.04]
     env:
+      BEAM_ROOT_DIR: beam
       RC_TAG: v${{ github.event.inputs.RELEASE }}-RC${{ github.event.inputs.RC_NUMBER }}
       SCRIPT_DIR: scripts/ci/release
       GIT_REPO_URL: https://github.com/${{ github.event.inputs.GIT_REPO_BASE_URL }}
@@ -64,8 +61,6 @@ jobs:
           echo "RC_TAG: ${RC_TAG}, SCRIPT_DIR: ${SCRIPT_DIR}, GIT_REPO_URL= ${GIT_REPO_URL}"
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          ref: ${{ env.RC_TAG }}
       - name: Set git config
         run: |
           git config user.name $GITHUB_ACTOR
@@ -74,11 +69,19 @@ jobs:
         run: |
           echo "================Checking Environment Variables=============="
           echo "will download artifacts for ${RC_TAG} built by github actions"
-          echo "LOCAL_CLONE_DIR_ROOT=$(pwd)" >> $GITHUB_ENV
+          echo "LOCAL_CLONE_DIR=beam_release_${RC_TAG}" >> $GITHUB_ENV
+          echo "LOCAL_CLONE_DIR_ROOT=$(pwd)/${LOCAL_CLONE_DIR}" >> $GITHUB_ENV
           echo "PYTHON_ARTIFACTS_DIR=${LOCAL_CLONE_DIR_ROOT}/python" >> $GITHUB_ENV
-          echo "RELEASE_COMMIT=$(git rev-list -n 1 $RC_TAG)" >> $GITHUB_ENV
           echo "LOCAL_CLONE_DIR_ROOT=${LOCAL_CLONE_DIR_ROOT}, PYTHON_ARTIFACTS_DIR=${PYTHON_ARTIFACTS_DIR} \
-            RELEASE_COMMIT=${RELEASE_COMMIT}"
+             , LOCAL_CLONE_DIR=${LOCAL_CLONE_DIR}"
+      - name: Clone release branch
+        run: |
+          mkdir "${LOCAL_CLONE_DIR}"
+          cd $LOCAL_CLONE_DIR
+          echo "===================Cloning Beam Release Branch=================="
+          git clone --depth 1 --branch "${RC_TAG}" ${GIT_REPO_URL} "${BEAM_ROOT_DIR}"
+          echo "RELEASE_COMMIT=$(git rev-list -n 1 $RC_TAG)" >> $GITHUB_ENV
+          echo "RELEASE_COMMIT=${RELEASE_COMMIT}"
       - name: Install python
         uses: actions/setup-python@v4
         with:
@@ -117,6 +120,7 @@ jobs:
           echo "===================Removing sha512 files======================="
           rm $(ls | grep -i ".*.sha512$")
       - name: Upload rc to pypi
+        working-directory: ${{env.PYTHON_ARTIFACTS_DIR}}
         run: |
           echo "====================Upload rc to pypi========================"
           pip install twine
