@@ -52,7 +52,7 @@ jobs:
     env:
       BEAM_ROOT_DIR: beam
       RC_TAG: v${{ github.event.inputs.RELEASE }}-RC${{ github.event.inputs.RC_NUMBER }}
-      SCRIPT_DIR: ./scripts/ci/release
+      SCRIPT_DIR: scripts/ci/release
       GIT_REPO_URL: https://github.com/${{ github.event.inputs.GIT_REPO_BASE_URL }}
       GITHUB_TOKEN: ${{ github.token }}
     steps:
