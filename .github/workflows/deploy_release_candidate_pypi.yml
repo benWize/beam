@@ -69,9 +69,12 @@ jobs:
         run: |
           echo "================Checking Environment Variables=============="
           echo "will download artifacts for ${RC_TAG} built by github actions"
-          echo "LOCAL_CLONE_DIR=beam_release_${RC_TAG}" >> $GITHUB_ENV
-          echo "LOCAL_CLONE_DIR_ROOT=$(pwd)/${LOCAL_CLONE_DIR}" >> $GITHUB_ENV
-          echo "PYTHON_ARTIFACTS_DIR=${LOCAL_CLONE_DIR_ROOT}/python" >> $GITHUB_ENV
+          LOCAL_CLONE_DIR=beam_release_${RC_TAG}
+          echo "LOCAL_CLONE_DIR=$LOCAL_CLONE_DIR" >> $GITHUB_ENV
+          LOCAL_CLONE_DIR_ROOT=$(pwd)/${LOCAL_CLONE_DIR}
+          echo "LOCAL_CLONE_DIR_ROOT=$LOCAL_CLONE_DIR_ROOT" >> $GITHUB_ENV
+          PYTHON_ARTIFACTS_DIR=${LOCAL_CLONE_DIR_ROOT}/python
+          echo "PYTHON_ARTIFACTS_DIR=$PYTHON_ARTIFACTS_DIR" >> $GITHUB_ENV
           echo "LOCAL_CLONE_DIR_ROOT=${LOCAL_CLONE_DIR_ROOT}, PYTHON_ARTIFACTS_DIR=${PYTHON_ARTIFACTS_DIR} \
              , LOCAL_CLONE_DIR=${LOCAL_CLONE_DIR}"
       - name: Clone release branch
@@ -80,7 +83,8 @@ jobs:
           cd $LOCAL_CLONE_DIR
           echo "===================Cloning Beam Release Branch=================="
           git clone --depth 1 --branch "${RC_TAG}" ${GIT_REPO_URL} "${BEAM_ROOT_DIR}"
-          echo "RELEASE_COMMIT=$(git rev-list -n 1 $RC_TAG)" >> $GITHUB_ENV
+          RELEASE_COMMIT=$(git rev-list -n 1 $RC_TAG)
+          echo "RELEASE_COMMIT=$RELEASE_COMMIT" >> $GITHUB_ENV
           echo "RELEASE_COMMIT=${RELEASE_COMMIT}"
       - name: Install python
         uses: actions/setup-python@v4
@@ -92,13 +96,6 @@ jobs:
           pip install requests python-dateutil
       - name: Download python artifacts
         run: |
-          echo python3 "${SCRIPT_DIR}/download_github_actions_artifacts.py" \
-          --github-user "${GITHUB_ACTOR}" \
-          --repo-url "${{ github.event.inputs.GIT_REPO_BASE_URL }}" \
-          --rc-tag "${RC_TAG}" \
-          --release-commit "${RELEASE_COMMIT}" \
-          --artifacts_dir "${PYTHON_ARTIFACTS_DIR}" \
-          --rc_number "${{ github.event.inputs.RC_NUMBER }}"
           python3 "${SCRIPT_DIR}/download_github_actions_artifacts.py" \
           --github-user "${GITHUB_ACTOR}" \
           --repo-url "${{ github.event.inputs.GIT_REPO_BASE_URL }}" \
