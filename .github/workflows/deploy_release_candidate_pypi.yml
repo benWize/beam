@@ -82,8 +82,8 @@ jobs:
           mkdir "${LOCAL_CLONE_DIR}"
           cd $LOCAL_CLONE_DIR
           echo "===================Cloning Beam Release Branch=================="
-          echo "git clone --depth 1 --branch ${RC_TAG} ${GIT_REPO_URL} ${BEAM_ROOT_DIR}"
           git clone --depth 1 --branch $RC_TAG $GIT_REPO_URL $BEAM_ROOT_DIR
+          cd $BEAM_ROOT_DIR
           RELEASE_COMMIT=$(git rev-list -n 1 $RC_TAG)
           echo "RELEASE_COMMIT=$RELEASE_COMMIT" >> $GITHUB_ENV
           echo "RELEASE_COMMIT=${RELEASE_COMMIT}"
