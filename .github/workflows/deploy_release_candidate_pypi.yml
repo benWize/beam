@@ -122,6 +122,9 @@ jobs:
           rm $(ls | grep -i ".*.sha512$")
       - name: Upload rc to pypi
         working-directory: ${{env.PYTHON_ARTIFACTS_DIR}}
+#               TODO: Enable upload and disable check
+#               TODO: Remove testpypi
+#            twine upload --repository testpypi *
         run: |
           echo "====================Upload rc to pypi========================"
           pip install twine
@@ -131,9 +134,6 @@ jobs:
           ls
 
           if [[ "${{ github.event.inputs.DEPLOY }}" == yes ]] ; then
-#               TODO: Enable upload and disable check
-#               TODO: Remove testpypi
-#            twine upload --repository testpypi *
              twine check *
           else
             echo "Skipping deployment to PyPI. Run the script with DEPLOY:yes to stage the artifacts."
