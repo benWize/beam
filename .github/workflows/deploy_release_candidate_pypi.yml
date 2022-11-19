@@ -55,6 +55,9 @@ jobs:
       SCRIPT_DIR: scripts/ci/release
       GIT_REPO_URL: https://github.com/${{ github.event.inputs.GIT_REPO_BASE_URL }}
       GITHUB_TOKEN: ${{ github.token }}
+#      TODO: Set TWINE_USERNAME and TWINE_PASSWORD as GHA Secrets or Runner ENVs and remove these
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     steps:
       - name: Echo vars
         run: |
@@ -128,7 +131,10 @@ jobs:
           ls
 
           if [[ "${{ github.event.inputs.DEPLOY }}" == yes ]] ; then
-            twine upload *
+#               TODO: Enable upload and disable check
+#               TODO: Remove testpypi
+#            twine upload --repository testpypi *
+             twine check *
           else
             echo "Skipping deployment to PyPI. Run the script with DEPLOY:yes to stage the artifacts."
           fi
