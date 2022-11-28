@@ -60,9 +60,13 @@
 
 * Support for Bigtable sink (Write and WriteBatch) added (Go) ([#23324](https://github.com/apache/beam/issues/23324)).
 * S3 implementation of the Beam filesystem (Go) ([#23991](https://github.com/apache/beam/issues/23991)).
+* Support for SingleStoreDB source and sink added (Java) ([#22617](https://github.com/apache/beam/issues/22617)).
+* Added support for DefaultAzureCredential authentication in Azure Filesystem (Python) ([#24210](https://github.com/apache/beam/issues/24210)).
 
 ## New Features / Improvements
 
+* Beam now provides a portable "runner" that can render pipeline graphs with
+  graphviz.  See `python -m apache_beam.runners.render --help` for more details.
 * Local packages can now be used as dependencies in the requirements.txt file, rather
   than requiring them to be passed separately via the `--extra_package` option
   (Python) ([#23684](https://github.com/apache/beam/pull/23684)).
@@ -73,6 +77,10 @@
 
 * `ParquetIO.withSplit` was removed since splittable reading has been the default behavior since 2.35.0. The effect of
   this change is to drop support for non-splittable reading (Java)([#23832](https://github.com/apache/beam/issues/23832)).
+* `beam-sdks-java-extensions-google-cloud-platform-core` is no longer a
+  dependency of the Java SDK Harness. Some users of a portable runner (such as Dataflow Runner v2)
+  may have an undeclared dependency on this package (for example using GCS with
+  TextIO) and will now need to declare the dependency.
 
 ## Deprecations
 
@@ -85,13 +93,12 @@
 * Fixed Beam SQL CalciteUtils (Java) and Cross-language JdbcIO (Python) did not support JDBC CHAR/VARCHAR, BINARY/VARBINARY logical types ([#23747](https://github.com/apache/beam/issues/23747), [#23526](https://github.com/apache/beam/issues/23526)).
 * Ensure iterated and emitted types are used with the generic register package are registered with the type and schema registries.(Go) ([#23889](https://github.com/apache/beam/pull/23889))
 
-# [2.43.0] - Unreleased
+# [2.43.0] - 2022-11-17
 
 ## Highlights
 
 * Python 3.10 support in Apache Beam ([#21458](https://github.com/apache/beam/issues/21458)).
 * An initial implementation of a runner that allows us to run Beam pipelines on Dask. Try it out and give us feedback! (Python) ([#18962](https://github.com/apache/beam/issues/18962)).
-
 
 ## I/Os
 
@@ -109,6 +116,8 @@
 * An initial implementation of a runner that allows us to run Beam pipelines on Dask. (Python) ([#18962](https://github.com/apache/beam/issues/18962)).
 * Allow configuring GCP OAuth scopes via pipeline options. This unblocks usages of Beam IOs that require additional scopes.
   For example, this feature makes it possible to access Google Drive backed tables in BigQuery ([#23290](https://github.com/apache/beam/issues/23290)).
+* An example for using Python RunInference from Java ([#23290](https://github.com/apache/beam/pull/23619)).
+* Data can now be read from BigQuery and directly plumbed into a DeferredDataframe in the Dataframe API. Users no longer have to re-specify the schema in this case ([#22907](https://github.com/apache/beam/pull/22907)).
 
 ## Breaking Changes
 
@@ -117,18 +126,9 @@
 * The PortableRunner for Spark assumes Spark 3 as default Spark major version unless configured otherwise using `--spark_version`.
   Spark 2 support is deprecated and will be removed soon ([#23728](https://github.com/apache/beam/issues/23728)).
 
-## Deprecations
-
-* X behavior is deprecated and will be removed in X versions ([#X](https://github.com/apache/beam/issues/X)).
-
 ## Bugfixes
 
 * Fixed Python cross-language JDBC IO Connector cannot read or write rows containing Numeric/Decimal type values ([#19817](https://github.com/apache/beam/issues/19817)).
-
-## Known Issues
-
-* ([#X](https://github.com/apache/beam/issues/X)).
-
 
 # [2.42.0] - 2022-10-17
 
