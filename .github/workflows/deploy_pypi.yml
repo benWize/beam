@@ -52,12 +52,13 @@ jobs:
         run: |
           mkdir ${LOCAL_CLONE_DIR}
           cd ${LOCAL_CLONE_DIR}
-          wget -r --no-parent -A zip,whl "https://dist.apache.org/repos/dist/dev/beam/${RELEASE}/python"
+          wget -r --no-parent -A zip,whl \
+          "https://dist.apache.org/repos/dist/dev/beam/${{ github.event.inputs.RELEASE }}/python"
       - name: Upload rc to pypi
         working-directory: ${{env.LOCAL_CLONE_DIR}}
 #        TODO: Remove check and add twine upload *
         run: |
-          cd "dist.apache.org/repos/dist/dev/beam/${RELEASE}/python/"
+          cd "dist.apache.org/repos/dist/dev/beam/${{ github.event.inputs.RELEASE }}/python/"
           echo "Will upload the following files to PyPI:"
           ls
           echo "====================Upload to pypi========================"
