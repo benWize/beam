@@ -29,11 +29,11 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-#    paths: [
-        'sdks/java/core/src/main/**',
-        'sdks/java/testing/test-utils/**',
-        'sdks/java/io/common/**',
-        'sdks/java/io/neo4j/**']
+##    paths: [
+#        'sdks/java/core/src/main/**',
+#        'sdks/java/testing/test-utils/**',
+#        'sdks/java/io/common/**',
+#        'sdks/java/io/neo4j/**']
 permissions: read-all
 
 jobs:

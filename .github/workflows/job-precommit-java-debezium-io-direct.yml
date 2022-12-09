@@ -30,10 +30,10 @@ on:
     branches: ['master', 'release-*']
     tags: ['v*']
 #    paths: [
-        'runners/google-cloud-dataflow-java/**',
-        'sdks/java/core/src/main/**',
-        'sdks/java/io/common/**',
-        'sdks/java/io/debezium/**']
+#        'runners/google-cloud-dataflow-java/**',
+#        'sdks/java/core/src/main/**',
+#        'sdks/java/io/common/**',
+#        'sdks/java/io/debezium/**']
 permissions: read-all
 
 jobs:

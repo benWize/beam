@@ -30,10 +30,10 @@ on:
     branches: ['master', 'release-*']
     tags: ['v*']
 #    paths: [
-        'sdks/java/core/src/main/**',
-        'sdks/java/testing/test-utils/**',
-        'sdks/java/io/common/**',
-        'sdks/java/io/jdbc/**']
+#        'sdks/java/core/src/main/**',
+#        'sdks/java/testing/test-utils/**',
+#        'sdks/java/io/common/**',
+#        'sdks/java/io/jdbc/**']
 permissions: read-all
 
 jobs:

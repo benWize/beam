@@ -30,14 +30,14 @@ on:
     branches: ['master', 'release-*']
     tags: ['v*']
 #    paths: [
-        'runners/core-construction-java/**',
-        'sdks/java/core/src/main/**',
-        'sdks/java/testing/test-utils/**',
-        'sdks/java/expansion-service/**',
-        'sdks/java/io/common/**',
-        'sdks/java/io/synthetic/**',
-        'sdks/java/io/expansion-service/**',
-        'sdks/java/io/kafka/**']
+#        'runners/core-construction-java/**',
+#        'sdks/java/core/src/main/**',
+#        'sdks/java/testing/test-utils/**',
+#        'sdks/java/expansion-service/**',
+#        'sdks/java/io/common/**',
+#        'sdks/java/io/synthetic/**',
+#        'sdks/java/io/expansion-service/**',
+#        'sdks/java/io/kafka/**']
 permissions: read-all
 
 jobs:

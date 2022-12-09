@@ -30,9 +30,9 @@ on:
     branches: ['master', 'release-*']
     tags: ['v*']
 #    paths: [
-        'sdks/java/core/src/main/**',
-        'sdks/java/io/common/**',
-        'sdks/java/io/kudu/**']
+#        'sdks/java/core/src/main/**',
+#        'sdks/java/io/common/**',
+#        'sdks/java/io/kudu/**']
 permissions: read-all
 
 jobs:
