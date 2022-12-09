@@ -127,6 +127,12 @@ Service Account shall have following permissions ([IAM roles](https://cloud.goog
 
 ### Release Preparation and Validation Workflows
 
+#### Choose RC Commit - [choose_rc_commit.yml](.github/workflows/choose_rc_commit.yml)
+
+| Job              | Description                                                                                         | Pull Request Run | Direct Push/Merge Run | Scheduled Run | Requires GCP Credentials |
+|------------------|-----------------------------------------------------------------------------------------------------|------------------|-----------------------|---------------|--------------------------|
+| Choose RC Commit | Chooses a commit to be the basis of a release candidate and pushes a new tagged commit for that RC. | No               | No                    | No            | No                       |
+
 #### Cut Release Branch - [verify_release_build.yml](.github/workflows/cut_release_branch.yml)
 | Job                   | Description                                                | Pull Request Run | Direct Push/Merge Run | Scheduled Run | Requires GCP Credentials |
 |-----------------------|------------------------------------------------------------|------------------|-----------------------|---------------|--------------------------|
@@ -160,9 +166,16 @@ Service Account shall have following permissions ([IAM roles](https://cloud.goog
 
 ### PreCommit Workflows
 
-| Workflow                                                                         | Description             | Requires GCP Credentials  |
-|----------------------------------------------------------------------------------|-------------------------|---------------------------|
-| [job-precommit-placeholder.yml](.github/workflows/job-precommit-placeholder.yml) | Description placeholder | Yes/No                    |
+| Workflow                                                                                                 | Description                                                                  | Requires GCP Credentials |
+|----------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|--------------------------|
+| [job-precommit-java-debezium-io-direct.yml](.github/workflows/job-precommit-java-debezium-io-direct.yml) | Runs Java SDK Debezium IO unit tests and integration tests with DirectRunner | No                       |
+| [job-precommit-java-jdbc-io-direct.yml](.github/workflows/job-precommit-java-jdbc-io-direct.yml)         | Runs Java SDK JDBC IO unit tests and integration tests with DirectRunner     | No                       |
+| [job-precommit-java-jms-io-direct.yml](.github/workflows/job-precommit-java-jms-io-direct.yml)           | Runs Java SDK JMS IO unit tests                                              | No                       |
+| [job-precommit-java-kafka-io-direct.yml](.github/workflows/job-precommit-java-kafka-io-direct.yml)       | Runs Java SDK Kafka IO unit tests and integration tests with DirectRunner    | No                       |
+| [job-precommit-java-kinesis-io-direct.yml](.github/workflows/job-precommit-java-kinesis-io-direct.yml)   | Runs Java SDK Kinesis IO unit tests and integration tests with DirectRunner  | No                       |
+| [job-precommit-java-kudu-io-direct.yml](.github/workflows/job-precommit-java-kudu-io-direct.yml)         | Runs Java SDK Kudu IO unit tests                                             | No                       |
+| [job-precommit-java-mongodb-io-direct.yml](.github/workflows/job-precommit-java-mongodb-io-direct.yml)   | Runs Java SDK MongoDB IO unit tests                                          | No                       |
+| [job-precommit-java-neo4j-io-direct.yml](.github/workflows/job-precommit-java-neo4j-io-direct.yml)       | Runs Java SDK Neo4j IO unit tests and integration tests with DirectRunner    | No                       |
 
 ### PostCommit Workflows
 
