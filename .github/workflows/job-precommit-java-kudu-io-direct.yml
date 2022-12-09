@@ -20,6 +20,7 @@
 name: Java Kudu IO Direct
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:
@@ -28,13 +29,16 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-#    paths: ['sdks/java/io/kudu/**']
+#    paths: [
+        'sdks/java/core/src/main/**',
+        'sdks/java/io/common/**',
+        'sdks/java/io/kudu/**']
 permissions: read-all
 
 jobs:
   java-kudu-io:
     name: Run Java Kudu IO Direct
-    runs-on: self-hosted
+    runs-on: [self-hosted, ubuntu-20.04]
     timeout-minutes: 60
     steps:
       - name: Checkout code
@@ -42,7 +46,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-          submodules: recursive
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
         with:
@@ -53,4 +56,4 @@ jobs:
       - name: Run :sdks:java:io:kudu:test
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: :sdks:java:io:kudu:test
+          gradle-command: :sdks:java:io:kudu:build :sdks:java:io:kudu:test

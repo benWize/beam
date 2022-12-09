@@ -20,6 +20,7 @@
 name: Java JDBC IO Direct
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:
@@ -28,13 +29,17 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-#    paths: ['sdks/java/io/jdbc/**']
+#    paths: [
+        'sdks/java/core/src/main/**',
+        'sdks/java/testing/test-utils/**',
+        'sdks/java/io/common/**',
+        'sdks/java/io/jdbc/**']
 permissions: read-all
 
 jobs:
   java-jdbc-io:
     name: Run Java JDBC IO Direct
-    runs-on: self-hosted
+    runs-on: [self-hosted, ubuntu-20.04]
     timeout-minutes: 60
     steps:
       - name: Checkout code
@@ -42,7 +47,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-          submodules: recursive
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
         with:
@@ -53,7 +57,7 @@ jobs:
       - name: Run :sdks:java:io:jdbc:integrationTest
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
-          gradle-command: :sdks:java:io:jdbc:integrationTest
+          gradle-command: :sdks:java:io:jdbc:build :sdks:java:io:jdbc:integrationTest
           arguments: "-PdisableSpotlessCheck=true -PdisableCheckStyle=true"
       - name: Run :sdks:java:io:jdbc:test
         uses: ./.github/actions/gradle-command-self-hosted-action

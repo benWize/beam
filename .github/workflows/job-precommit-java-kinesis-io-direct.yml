@@ -20,6 +20,7 @@
 name: Java Kinesis IO Direct
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
   push:
@@ -28,13 +29,16 @@ on:
   pull_request:
     branches: ['master', 'release-*']
     tags: ['v*']
-#    paths: ['sdks/java/io/kinesis/**']
+#    paths: [
+        'sdks/java/core/src/main/**',
+        'sdks/java/io/common/**',
+        'sdks/java/io/kinesis/**']
 permissions: read-all
 
 jobs:
   java-kinesis-io:
     name: Run Java Kinesis IO Direct
-    runs-on: self-hosted
+    runs-on: [self-hosted, ubuntu-20.04]
     timeout-minutes: 60
     steps:
       - name: Checkout code
@@ -42,7 +46,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-          submodules: recursive
       - name: Setup environment
         uses: ./.github/actions/setup-self-hosted-action
         with:
@@ -50,6 +53,14 @@ jobs:
           requires-py-38: false
           requires-py-39: false
           requires-go-18: false
+      - name: Run :sdks:java:io:kinesis:build
+        uses: ./.github/actions/gradle-command-self-hosted-action
+        with:
+          gradle-command: :sdks:java:io:kinesis:build
+      - name: Run :sdks:java:io:kinesis:expansion-service:build
+        uses: ./.github/actions/gradle-command-self-hosted-action
+        with:
+          gradle-command: :sdks:java:io:kinesis:expansion-service:build
       - name: Run :sdks:java:io:kinesis:integrationTest
         uses: ./.github/actions/gradle-command-self-hosted-action
         with:
